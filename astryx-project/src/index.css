@@ -1,0 +1,244 @@
+@import '@astryxdesign/core/reset.css';
+@import '@astryxdesign/core/astryx.css';
+@import '@astryxdesign/theme-neutral/theme.css';
+@import '@astryxdesign/theme-neutral/fonts.css';
+
+/* OJT Tracker Brand Token Customizations & Light Theme Palette */
+:root,
+html[data-theme="light"],
+[data-astryx-theme] {
+  color-scheme: light;
+
+  /* Brand Primary & Accents */
+  --color-accent: #10b981;
+  --color-on-accent: #ffffff;
+  --color-accent-muted: rgba(16, 185, 129, 0.12);
+  --color-text-accent: #059669;
+  --color-icon-accent: #10b981;
+
+  /* Surfaces & Backgrounds */
+  --color-background-body: #ffffff;
+  --color-background-surface: #ffffff;
+  --color-background-card: #ffffff;
+  --color-background-popover: #ffffff;
+  --color-background-muted: #f8fafc;
+
+  /* Typography Colors */
+  --color-text-primary: #142b49;
+  --color-text-secondary: #64748b;
+  --color-text-disabled: #94a3b8;
+
+  /* Borders */
+  --color-border: #e2e8f0;
+  --color-border-emphasized: #cbd5e1;
+
+  /* Shadows */
+  --color-shadow: rgba(20, 43, 73, 0.06);
+}
+
+/* Base Body Styling */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-background-body, #ffffff);
+  color: var(--color-text-primary, #142b49);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Landing Page Wrapper to guarantee solid light background across all viewports */
+.ojt-landing-root {
+  background-color: var(--color-background-body, #ffffff);
+  color: var(--color-text-primary, #142b49);
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Constrained centered content containers for landing sections */
+.ojt-landing-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* iOS-Style Wheel Picker Styles */
+.ios-wheel-column {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+}
+
+.ios-wheel-column::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.ios-wheel-item {
+  scroll-snap-align: center;
+  scroll-snap-stop: normal;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ==========================================================================
+   DTTR Print Stylesheet — CHMSU Portrait Long Bond Paper (8.5in × 13in)
+   ========================================================================== */
+@media print {
+  /*
+   * margin: 0 removes the browser's own header/footer strip (the area where
+   * it prints the URL, date, and page number). With margin: 0 the browser
+   * has no space to draw those labels.  Document padding is handled inside
+   * #dttr-print-portal-host below.
+   *
+   * NOTE: Some browsers (e.g. Firefox) ignore @page margin for their
+   * built-in headers/footers. If the URL/date still appear, uncheck
+   * "Headers and footers" in the browser's Print dialog.
+   */
+  @page {
+    size: 8.5in 13in portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 8.5in !important;
+    height: 13in !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide ALL app shell, navigation, modals, overlays, and interactive chrome.
+   * Using display:none (not visibility:hidden) so they take zero layout space
+   * and cannot push #dttr-print-portal-host onto a second page. */
+  body > *:not(#dttr-print-portal-host) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /*
+   * Portal host: rendered as a direct child of <body> via ReactDOM.createPortal.
+   * position:absolute + top:0 + left:0 anchors it to the very top-left corner
+   * of the printed page, completely independent of DOM order.
+   * Padding replaces the @page margin so the content is inset from the page edge.
+   */
+  #dttr-print-portal-host {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 8.5in !important;
+    min-height: 0 !important;
+    max-height: 13in !important;
+    padding: 0.30in 0.40in !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    background: #ffffff !important;
+  }
+
+  /* DTTR document root — fills the portal host */
+  #dttr-printable-report {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: hidden !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+  }
+
+  /* Make every descendant visible */
+  #dttr-printable-report * {
+    visibility: visible !important;
+  }
+
+  /* ── Attendance table ──────────────────────────────────────── */
+  .dttr-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    background: #ffffff !important;
+  }
+
+  /* Explicit column widths that stop time-cell text from overflowing.
+   * Total = 6% + 11% + 11% + 11% + 11% + 7% + 43% = 100% */
+  .dttr-table col:nth-child(1) { width: 6% !important; }   /* DAY */
+  .dttr-table col:nth-child(2) { width: 11% !important; }  /* AM Arrival */
+  .dttr-table col:nth-child(3) { width: 11% !important; }  /* AM Departure */
+  .dttr-table col:nth-child(4) { width: 11% !important; }  /* PM Arrival */
+  .dttr-table col:nth-child(5) { width: 11% !important; }  /* PM Departure */
+  .dttr-table col:nth-child(6) { width: 7% !important; }   /* NO. OF HOURS */
+  .dttr-table col:nth-child(7) { width: 43% !important; }  /* TASKS */
+
+  .dttr-table th,
+  .dttr-table td {
+    border: 0.75pt solid #1a1a1a !important;
+    color: #000000 !important;
+    padding: 1.5pt 2pt !important;
+    font-size: 7pt !important;
+    line-height: 1.15 !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  .dttr-table th {
+    background-color: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+  }
+
+  /* Allow tasks column to wrap; keep time columns from wrapping awkwardly */
+  .dttr-table td:nth-child(2),
+  .dttr-table td:nth-child(3),
+  .dttr-table td:nth-child(4),
+  .dttr-table td:nth-child(5) {
+    white-space: normal !important;
+    word-break: break-all !important;
+    text-align: center !important;
+    font-size: 6.5pt !important;
+  }
+
+  /* Avoid splitting a single row across pages (best-effort) */
+  .dttr-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Utility: non-printable UI chrome */
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Signature block */
+  .dttr-signature-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
