@@ -13,6 +13,7 @@ import { Divider } from '@astryxdesign/core/Divider';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { Banner } from '@astryxdesign/core/Banner';
 import { useTraining } from '../hooks/useTraining';
+import { InstallAppCard } from '../components/pwa/InstallAppCard';
 
 const SETTINGS_STORAGE_KEY = 'ojt_app_settings';
 
@@ -95,6 +96,8 @@ export function Settings({ onNavigate }) {
         )}
 
         <Grid columns={{ minWidth: 320, max: 2 }} gap={4}>
+          <InstallAppCard />
+
           {/* Section 0: Onboarding Setup Configuration */}
           <Card elevation="low" padding={5}>
             <VStack gap={4}>

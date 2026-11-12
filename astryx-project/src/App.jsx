@@ -15,6 +15,7 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { OnboardingWizard } from './pages/onboarding/OnboardingWizard';
 import { isAuthenticated } from './services/authService';
+import { PwaStatusBanners } from './components/pwa/PwaStatusBanners';
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
@@ -86,6 +87,7 @@ export function App() {
   if (activePage === 'landing') {
     return (
       <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
         <LandingPage
           onEnterApp={() => (isAuthenticated() ? navigateTo('dashboard') : navigateTo('login'))}
           onNavigate={navigateTo}
@@ -97,6 +99,7 @@ export function App() {
   if (activePage === 'register') {
     return (
       <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
         <RegisterPage onNavigate={navigateTo} />
       </Theme>
     );
@@ -105,6 +108,7 @@ export function App() {
   if (activePage === 'login') {
     return (
       <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
         <LoginPage onNavigate={navigateTo} />
       </Theme>
     );
@@ -113,6 +117,7 @@ export function App() {
   if (activePage === 'onboarding') {
     return (
       <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
         <TrainingProvider>
           <OnboardingWizard
             onComplete={() => {
@@ -156,6 +161,7 @@ export function App() {
             />
           }
         >
+          <PwaStatusBanners />
           {renderActivePage()}
         </AppShell>
       </TrainingProvider>
