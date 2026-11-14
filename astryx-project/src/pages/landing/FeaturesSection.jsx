@@ -35,9 +35,9 @@ const FEATURES = [
   {
     icon: PrinterIcon,
     title: 'DTTR PDF Generation',
-    badge: 'Official Template',
+    badge: 'Flexible Export',
     description:
-      'Generate one-page, print-ready Daily Time & Tasks Records in official 8.5" × 13" portrait long bond paper format with centered university branding and signatures.',
+      'Generate clean, print-ready Daily Time & Tasks Records formatted for any bond paper size with structured attendance tables and supervisor signatures.',
   },
   {
     icon: TrendingUpIcon,
@@ -57,7 +57,13 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <Section id="features" variant="muted" paddingBlock={10} paddingInline={0}>
+    <Section
+      id="features"
+      variant="transparent"
+      paddingBlock={10}
+      paddingInline={0}
+      style={{ backgroundColor: '#FCFCFB' }}
+    >
       <div className="ojt-landing-container">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
           {/* Header */}

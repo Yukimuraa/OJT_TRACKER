@@ -8,37 +8,16 @@ import { Heading } from '@astryxdesign/core/Heading';
 import { Text } from '@astryxdesign/core/Text';
 import { Button } from '@astryxdesign/core/Button';
 import { NumberInput } from '@astryxdesign/core/NumberInput';
-import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
 import { Divider } from '@astryxdesign/core/Divider';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { Banner } from '@astryxdesign/core/Banner';
 import { useTraining } from '../hooks/useTraining';
 import { InstallAppCard } from '../components/pwa/InstallAppCard';
-
-const SETTINGS_STORAGE_KEY = 'ojt_app_settings';
-
-function loadStoredSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { dailyReminder: true, milestoneAlerts: true, weeklySummary: false };
-    return JSON.parse(raw);
-  } catch {
-    return { dailyReminder: true, milestoneAlerts: true, weeklySummary: false };
-  }
-}
-
-function saveStoredSettings(settings) {
-  try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  } catch (err) {
-    console.error('Failed to save settings', err);
-  }
-}
+import { RemindersSection } from '../components/settings/RemindersSection';
 
 export function Settings({ onNavigate }) {
   const { requiredHours, setRequiredHours, records, clearAllRecords } = useTraining();
   const [tempHours, setTempHours] = useState(requiredHours);
-  const [preferences, setPreferences] = useState(loadStoredSettings);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
@@ -48,12 +27,6 @@ export function Settings({ onNavigate }) {
       setFeedback({ type: 'success', message: 'Target hours updated successfully.' });
       setTimeout(() => setFeedback(null), 3000);
     }
-  };
-
-  const handleTogglePreference = (key, val) => {
-    const next = { ...preferences, [key]: val };
-    setPreferences(next);
-    saveStoredSettings(next);
   };
 
   const handleExportData = () => {
@@ -163,42 +136,8 @@ export function Settings({ onNavigate }) {
             </VStack>
           </Card>
 
-          {/* Section 2: Notifications & Reminders */}
-          <Card elevation="low" padding={5}>
-            <VStack gap={4}>
-              <VStack gap={1}>
-                <Heading level={3}>Reminders & Notifications</Heading>
-                <Text type="supporting" color="secondary">
-                  Manage attendance reminders and milestone completion alerts.
-                </Text>
-              </VStack>
-
-              <Divider variant="subtle" />
-
-              <VStack gap={3}>
-                <CheckboxInput
-                  label="Daily Log Reminder"
-                  description="Prompt to record daily hours at the end of each training day."
-                  value={preferences.dailyReminder}
-                  onChange={(val) => handleTogglePreference('dailyReminder', val)}
-                />
-
-                <CheckboxInput
-                  label="Milestone Progress Alerts"
-                  description="Celebrate when reaching 25%, 50%, 75%, and 100% completion."
-                  value={preferences.milestoneAlerts}
-                  onChange={(val) => handleTogglePreference('milestoneAlerts', val)}
-                />
-
-                <CheckboxInput
-                  label="Weekly Recap Summary"
-                  description="Review cumulative weekly hours rendered and remaining days."
-                  value={preferences.weeklySummary}
-                  onChange={(val) => handleTogglePreference('weeklySummary', val)}
-                />
-              </VStack>
-            </VStack>
-          </Card>
+          {/* Section 2: Functional Reminders & Notifications */}
+          <RemindersSection />
 
           {/* Section 3: Data Export & Backup */}
           <Card elevation="low" padding={5}>

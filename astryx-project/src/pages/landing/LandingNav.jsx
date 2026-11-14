@@ -5,8 +5,8 @@ import { GraduationCapIcon, MenuIcon, CloseIcon } from '../../components/common/
 const NAV_LINKS = [
   { label: 'Home', href: '#home' },
   { label: 'Features', href: '#features' },
+  { label: 'Preview', href: '#product-preview' },
   { label: 'How It Works', href: '#how-it-works' },
-  { label: 'About', href: '#about' },
 ];
 
 export function LandingNav({ onRegister, onLogin }) {
@@ -25,7 +25,7 @@ export function LandingNav({ onRegister, onLogin }) {
       setScrollProgress(progress);
       setIsScrolled(currentScroll > 15);
 
-      const sections = ['home', 'features', 'product-preview', 'how-it-works', 'about'];
+      const sections = ['home', 'features', 'product-preview', 'how-it-works'];
       let current = 'home';
       for (const id of sections) {
         const el = document.getElementById(id);
@@ -98,10 +98,10 @@ export function LandingNav({ onRegister, onLogin }) {
           top: 0,
           zIndex: 50,
           width: '100%',
-          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.92)',
+          backgroundColor: isScrolled ? 'rgba(252, 252, 251, 0.98)' : 'rgba(252, 252, 251, 0.92)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: isScrolled ? '1px solid #e2e8f0' : '1px solid rgba(226, 232, 240, 0.7)',
+          borderBottom: isScrolled ? '1px solid #e5e7eb' : '1px solid rgba(229, 231, 235, 0.7)',
           boxShadow: isScrolled ? '0 4px 20px -2px rgba(20, 43, 73, 0.08)' : 'none',
           transition: 'all 0.25s ease',
         }}
@@ -388,7 +388,7 @@ export function LandingNav({ onRegister, onLogin }) {
                   minHeight: 48,
                   borderRadius: 12,
                   border: 'none',
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#000000',
                   color: '#ffffff',
                   fontSize: '1rem',
                   fontWeight: 700,
@@ -396,8 +396,14 @@ export function LandingNav({ onRegister, onLogin }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-                  transition: 'background-color 0.15s, transform 0.15s',
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
+                  transition: 'background-color 0.15s ease, transform 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1f2937';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#000000';
                 }}
               >
                 Get Started

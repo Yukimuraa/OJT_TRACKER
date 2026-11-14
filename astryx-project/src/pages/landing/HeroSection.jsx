@@ -1,5 +1,6 @@
 import React from 'react';
 import { Section } from '@astryxdesign/core/Section';
+import { UserAvatar } from '../../components/common/UserAvatar';
 import {
   CheckCircleIcon,
   HourglassIcon,
@@ -98,22 +99,7 @@ function ProductMockup() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: '#142b49',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: '1rem',
-              }}
-            >
-              JD
-            </div>
+            <UserAvatar size={44} alt="John Doe" />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1rem', fontWeight: 700, color: '#142b49' }}>
@@ -133,7 +119,7 @@ function ProductMockup() {
                 </span>
               </div>
               <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 2 }}>
-                BS Information Technology · CHMSU Talisay
+                BS Information Technology · Student Intern
               </div>
             </div>
           </div>
@@ -375,7 +361,13 @@ function ProductMockup() {
 
 export function HeroSection({ onRegister }) {
   return (
-    <Section id="home" variant="transparent" paddingBlock={8} paddingInline={0}>
+    <Section
+      id="home"
+      variant="transparent"
+      paddingBlock={8}
+      paddingInline={0}
+      style={{ backgroundColor: '#FCFCFB' }}
+    >
       <div className="ojt-landing-container">
         <div
           style={{
@@ -403,9 +395,8 @@ export function HeroSection({ onRegister }) {
 
             {/* Supporting description */}
             <p className="ojt-lead-text">
-              The modern web platform to record daily time logs, monitor rendered hours toward your
-              degree requirement, track activities, and generate official college DTTR PDF reports in
-              seconds.
+              A simpler way to manage your internship hours, document your daily activities,
+              monitor your progress, and prepare your OJT reports.
             </p>
 
             {/* CTA button row */}
@@ -425,7 +416,7 @@ export function HeroSection({ onRegister }) {
                   padding: '0 26px',
                   borderRadius: 12,
                   border: 'none',
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#000000',
                   color: '#ffffff',
                   fontSize: '1rem',
                   fontWeight: 700,
@@ -433,8 +424,16 @@ export function HeroSection({ onRegister }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 10,
-                  boxShadow: '0 8px 20px -4px rgba(16, 185, 129, 0.4)',
-                  transition: 'background-color 0.15s, transform 0.15s',
+                  boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.25)',
+                  transition: 'background-color 0.15s ease, transform 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1f2937';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#000000';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 <span>Get Started Free</span>
@@ -490,7 +489,7 @@ export function HeroSection({ onRegister }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <CheckCircleIcon style={{ width: 16, height: 16, color: '#10b981' }} />
-                <span>Official DTTR Long Bond Format</span>
+                <span>Export in Any Bond Format</span>
               </div>
             </div>
           </div>

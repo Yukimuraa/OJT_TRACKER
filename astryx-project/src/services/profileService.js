@@ -8,6 +8,7 @@ export function getProfileStorageKey(userId = null) {
 export const DEFAULT_STUDENT_PROFILE = {
   fullName: 'Student Intern',
   studentId: '2026-OJT-001',
+  avatarUrl: '/assets/student-avatar.png',
   program: 'BS Information Technology',
   institution: 'State University - College of Computing',
   company: 'Technology Solutions & Innovations Inc.',

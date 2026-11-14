@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { Button } from '@astryxdesign/core/Button';
-import { GraduationCapIcon, CheckCircleIcon } from '../../components/common/BrandIcons';
+import { GraduationCapIcon } from '../../components/common/BrandIcons';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -26,8 +26,8 @@ export function FooterSection({ onRegister, onLogin }) {
     <>
       <footer
         style={{
-          backgroundColor: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
+          backgroundColor: '#FCFCFB',
+          borderTop: '1px solid #e5e7eb',
           padding: 'clamp(40px, 6vw, 64px) 0 32px 0',
         }}
       >
@@ -82,20 +82,6 @@ export function FooterSection({ onRegister, onLogin }) {
                 interns to record daily attendance, monitor hours rendered, and export official
                 college DTTR reports.
               </p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: '#059669',
-                }}
-              >
-                <CheckCircleIcon style={{ width: 14, height: 14 }} />
-                <span>Compliant with CHED &amp; State University Guidelines</span>
-              </div>
             </div>
 
             {/* Column 2: Navigation */}
@@ -149,8 +135,8 @@ export function FooterSection({ onRegister, onLogin }) {
                   How It Works
                 </a>
                 <a
-                  href="#about"
-                  onClick={handleScroll('about')}
+                  href="#product-preview"
+                  onClick={handleScroll('product-preview')}
                   style={{
                     fontSize: '0.9rem',
                     color: '#64748b',
@@ -158,7 +144,7 @@ export function FooterSection({ onRegister, onLogin }) {
                     transition: 'color 0.15s',
                   }}
                 >
-                  About the Platform
+                  Interactive Preview
                 </a>
               </div>
             </div>
@@ -269,9 +255,6 @@ export function FooterSection({ onRegister, onLogin }) {
                 >
                   Terms of Service
                 </button>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                  CHMSU CCS Approved Reference
-                </span>
               </div>
             </div>
           </div>
@@ -354,8 +337,7 @@ export function FooterSection({ onRegister, onLogin }) {
                 </p>
                 <p>
                   <strong>Official Documents:</strong> Generated DTTR reports are compiled locally on
-                  your device using the official CHMSU College of Computer Studies portrait long bond
-                  format.
+                  your device in structured portrait long bond paper formats.
                 </p>
               </>
             )}
@@ -392,19 +374,17 @@ export function FooterSection({ onRegister, onLogin }) {
                     padding: 16,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 8,
+                    gap: 10,
+                    fontSize: '0.9rem',
                   }}
                 >
                   <div>
-                    <strong>Support Email:</strong>{' '}
-                    <span style={{ color: '#10b981' }}>support@ojt-tracker.ph</span>
+                    <strong>Help &amp; Instructions:</strong> In-app configuration guides are available
+                    under Settings or in the How It Works section.
                   </div>
                   <div>
-                    <strong>Institution:</strong> Carlos Hilado Memorial State University (Main
-                    Campus, Talisay City)
-                  </div>
-                  <div>
-                    <strong>Department:</strong> College of Computer Studies (CCS)
+                    <strong>Data Storage:</strong> All time logs, session intervals, and profile settings
+                    remain securely stored locally on your device.
                   </div>
                 </div>
               </>

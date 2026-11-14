@@ -30,13 +30,19 @@ const STEPS = [
     title: 'Track Progress & Print DTTR',
     badge: 'Step 3: Verification',
     description:
-      'Watch your progress bar advance in real time. Whenever submission day arrives, export or print an official, signed CHMSU portrait long bond DTTR report in one click.',
+      'Watch your progress bar advance in real time. Whenever submission day arrives, generate and organize your Daily Time and Task Records for your OJT documentation in one click.',
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <Section id="how-it-works" variant="transparent" paddingBlock={10} paddingInline={0}>
+    <Section
+      id="how-it-works"
+      variant="transparent"
+      paddingBlock={10}
+      paddingInline={0}
+      style={{ backgroundColor: '#FCFCFB' }}
+    >
       <div className="ojt-landing-container">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
           {/* Header */}

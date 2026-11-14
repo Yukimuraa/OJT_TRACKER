@@ -29,7 +29,7 @@ export function PageLayout({ title, description, actions, children }) {
         )}
       </HStack>
 
-      <Section variant="section" padding={4}>
+      <Section variant="transparent" padding={0}>
         {children}
       </Section>
     </VStack>

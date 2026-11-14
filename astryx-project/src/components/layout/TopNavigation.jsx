@@ -4,9 +4,9 @@ import { Heading } from '@astryxdesign/core/Heading';
 import { HStack } from '@astryxdesign/core/HStack';
 import { IconButton } from '@astryxdesign/core/IconButton';
 import { Icon } from '@astryxdesign/core/Icon';
-import { Avatar } from '@astryxdesign/core/Avatar';
 import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 import { BellIcon } from '../common/BrandIcons';
+import { UserAvatar } from '../common/UserAvatar';
 import { loadStoredProfile } from '../../services/profileService';
 import { logoutUser, getCurrentUser } from '../../services/authService';
 
@@ -14,6 +14,7 @@ export function TopNavigation({ pageTitle, onNavigate }) {
   const user = getCurrentUser();
   const profile = loadStoredProfile(user?.id);
   const studentName = user?.fullName || profile?.fullName || 'Student Trainee';
+  const avatarPhoto = user?.photoUrl || profile?.avatarUrl;
 
   const handleSignOut = () => {
     logoutUser();
@@ -62,7 +63,7 @@ export function TopNavigation({ pageTitle, onNavigate }) {
             renderTrigger={(triggerProps) => (
               <IconButton
                 label="Student Account Menu"
-                icon={<Avatar name={studentName} size="sm" tooltip={false} />}
+                icon={<UserAvatar src={avatarPhoto} alt={studentName} size={28} />}
                 variant="ghost"
                 tooltip="Account Menu"
                 {...triggerProps}

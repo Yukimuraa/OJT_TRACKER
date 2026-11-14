@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const NAVY = '#142b49'
-const LIGHT_BACKGROUND = '#f8fafc'
+const LIGHT_BACKGROUND = '#FCFCFB'
 
 export default defineConfig({
   plugins: [
@@ -58,6 +58,7 @@ export default defineConfig({
       },
 
       workbox: {
+        importScripts: ['sw-custom.js'],
         globPatterns: [
           '**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}',
         ],

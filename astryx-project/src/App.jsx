@@ -5,6 +5,7 @@ import { themes, defaultThemeSlug } from './astryx-themes';
 import { TrainingProvider } from './context/TrainingContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopNavigation } from './components/layout/TopNavigation';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { Dashboard } from './pages/Dashboard';
 import { TimeLogs } from './pages/TimeLogs';
 import { Reports } from './pages/Reports';
@@ -14,7 +15,8 @@ import { LandingPage } from './pages/landing/LandingPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { OnboardingWizard } from './pages/onboarding/OnboardingWizard';
-import { isAuthenticated } from './services/authService';
+import { isAuthenticated, getCurrentUser } from './services/authService';
+import { restartReminderScheduler } from './services/reminderService';
 import { PwaStatusBanners } from './components/pwa/PwaStatusBanners';
 
 const PAGE_TITLES = {
@@ -59,6 +61,16 @@ export function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Initialize background reminder scheduler for authenticated student
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const user = getCurrentUser();
+      if (user?.id) {
+        restartReminderScheduler(user.id);
+      }
+    }
+  }, [activePage]);
 
   const navigateTo = (page) => {
     // Route guard: Prevent unauthenticated users from accessing protected pages
@@ -153,6 +165,7 @@ export function App() {
           variant="elevated"
           height="auto"
           contentPadding={4}
+          mobileNav={false}
           sideNav={<Sidebar activePage={activePage} onNavigate={navigateTo} />}
           topNav={
             <TopNavigation
@@ -162,7 +175,10 @@ export function App() {
           }
         >
           <PwaStatusBanners />
-          {renderActivePage()}
+          <div className="ojt-authenticated-content">
+            {renderActivePage()}
+          </div>
+          <MobileBottomNav activePage={activePage} onNavigate={navigateTo} />
         </AppShell>
       </TrainingProvider>
     </Theme>

@@ -6,7 +6,7 @@ import { Grid } from '@astryxdesign/core/Grid';
 import { Card } from '@astryxdesign/core/Card';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Text } from '@astryxdesign/core/Text';
-import { Avatar } from '@astryxdesign/core/Avatar';
+import { UserAvatar } from '../components/common/UserAvatar';
 import { Button } from '@astryxdesign/core/Button';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Divider } from '@astryxdesign/core/Divider';
@@ -32,6 +32,16 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
     onOpenChange(open);
   };
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFormData((prev) => ({ ...prev, avatarUrl: event.target?.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = () => {
     onSave(formData);
     onOpenChange(false);
@@ -41,7 +51,7 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
     <Dialog isOpen={isOpen} onOpenChange={handleClose} purpose="form" width={540} maxHeight="90dvh">
       <DialogHeader
         title="Edit Student Profile"
-        subtitle="Update your student credentials and training placement details."
+        subtitle="Update your student credentials, profile photo, and training details."
         onOpenChange={handleClose}
       />
       <VStack
@@ -54,6 +64,49 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
           WebkitOverflowScrolling: 'touch',
         }}
       >
+        {/* Profile Avatar Upload Section */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            padding: 12,
+            backgroundColor: '#f8fafc',
+            borderRadius: 12,
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <UserAvatar src={formData.avatarUrl} alt={formData.fullName} size={64} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#142b49' }}>
+              Profile Avatar
+            </span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                type="file"
+                id="profile-photo-file-input"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handlePhotoUpload}
+              />
+              <Button
+                label="Choose Photo"
+                variant="secondary"
+                size="sm"
+                onClick={() => document.getElementById('profile-photo-file-input')?.click()}
+              />
+              {formData.avatarUrl && (
+                <Button
+                  label="Remove"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFormData((p) => ({ ...p, avatarUrl: '' }))}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
         <TextInput
           label="Full Name"
           isRequired
@@ -171,10 +224,10 @@ export function Profile() {
         {/* Profile Header Hero Card */}
         <Card elevation="low" padding={5}>
           <HStack gap={5} align="center" wrap="wrap">
-            <Avatar
-              name={profile.fullName}
-              size={72}
-              shape="rounded"
+            <UserAvatar
+              src={profile.avatarUrl}
+              alt={profile.fullName}
+              size={76}
             />
             <StackItem size="fill">
               <VStack gap={1}>

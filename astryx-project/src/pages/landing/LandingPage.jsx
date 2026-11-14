@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { VStack } from '@astryxdesign/core/VStack';
 import { LandingNav } from './LandingNav';
 import { HeroSection } from './HeroSection';
+import { SmartphoneShowcaseSection } from './SmartphoneShowcaseSection';
 import { FeaturesSection } from './FeaturesSection';
-import { ProductPreviewSection } from './ProductPreviewSection';
 import { HowItWorksSection } from './HowItWorksSection';
 import { CTASection } from './CTASection';
 import { FooterSection } from './FooterSection';
@@ -57,8 +57,8 @@ export function LandingPage({ onEnterApp, onNavigate }) {
       <VStack gap={0}>
         <LandingNav onRegister={handleRegister} onLogin={handleLogin} />
         <HeroSection onRegister={handleRegister} />
+        <SmartphoneShowcaseSection />
         <FeaturesSection />
-        <ProductPreviewSection />
         <HowItWorksSection />
         <CTASection onRegister={handleRegister} />
         <FooterSection onRegister={handleRegister} onLogin={handleLogin} />
