@@ -8,7 +8,6 @@ import { Heading } from '@astryxdesign/core/Heading';
 import { Text } from '@astryxdesign/core/Text';
 import { Button } from '@astryxdesign/core/Button';
 import { ProgressBar } from '@astryxdesign/core/ProgressBar';
-import { Table, pixel, proportional } from '@astryxdesign/core/Table';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Icon } from '@astryxdesign/core/Icon';
@@ -43,39 +42,6 @@ export function Reports({ onNavigate }) {
     () => calculateMilestones(analytics.completed, requiredHours),
     [analytics.completed, requiredHours]
   );
-
-  const categoryColumns = [
-    {
-      key: 'category',
-      header: 'Category / Activity',
-      width: proportional(2),
-      renderCell: (row) => <Text weight="medium">{row.category}</Text>,
-    },
-    {
-      key: 'hours',
-      header: 'Rendered Hours',
-      width: pixel(140),
-      align: 'end',
-      renderCell: (row) => (
-        <Text hasTabularNumbers weight="semibold">
-          {row.hours} hrs
-        </Text>
-      ),
-    },
-    {
-      key: 'percentage',
-      header: '% of Total',
-      width: pixel(140),
-      align: 'end',
-      renderCell: (row) => (
-        <HStack gap={2} align="center" justify="end">
-          <Text hasTabularNumbers weight="medium" color="accent">
-            {row.percentage}%
-          </Text>
-        </HStack>
-      ),
-    },
-  ];
 
   const handlePrint = () => {
     window.print();
@@ -245,13 +211,258 @@ export function Reports({ onNavigate }) {
                 </Text>
               </VStack>
 
-              <Table
-                data={categoryBreakdown}
-                columns={categoryColumns}
-                idKey="category"
-                density="balanced"
-                dividers="rows"
-              />
+              {/* Desktop & Tablet Table View */}
+              <div
+                className="ojt-desktop-only"
+                style={{
+                  width: '100%',
+                  overflow: 'hidden',
+                  borderRadius: 12,
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#ffffff',
+                }}
+              >
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    textAlign: 'left',
+                    tableLayout: 'fixed',
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        backgroundColor: '#f8fafc',
+                        borderBottom: '2px solid #e2e8f0',
+                      }}
+                    >
+                      <th
+                        style={{
+                          width: '45%',
+                          padding: '14px 18px',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: '#142b49',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        Category / Activity
+                      </th>
+                      <th
+                        style={{
+                          width: '25%',
+                          padding: '14px 18px',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: '#142b49',
+                          textAlign: 'right',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        Rendered Hours
+                      </th>
+                      <th
+                        style={{
+                          width: '30%',
+                          padding: '14px 18px',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: '#142b49',
+                          textAlign: 'right',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        % of Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryBreakdown.map((row, idx) => (
+                      <tr
+                        key={row.category}
+                        style={{
+                          borderBottom: idx < categoryBreakdown.length - 1 ? '1px solid #f1f5f9' : 'none',
+                          transition: 'background-color 0.15s',
+                        }}
+                      >
+                        <td
+                          style={{
+                            padding: '14px 18px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            color: '#142b49',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                backgroundColor: '#10b981',
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span>{row.category}</span>
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: '14px 18px',
+                            fontSize: '0.9rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          {row.hours} hrs
+                        </td>
+                        <td
+                          style={{
+                            padding: '14px 18px',
+                            textAlign: 'right',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                              gap: 12,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 90,
+                                height: 7,
+                                backgroundColor: '#e2e8f0',
+                                borderRadius: 999,
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: `${Math.min(100, row.percentage)}%`,
+                                  height: '100%',
+                                  backgroundColor: '#10b981',
+                                  borderRadius: 999,
+                                }}
+                              />
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '0.875rem',
+                                fontWeight: 700,
+                                color: '#059669',
+                                fontVariantNumeric: 'tabular-nums',
+                                minWidth: 42,
+                              }}
+                            >
+                              {row.percentage}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Adaptive Cards View (<= 768px) */}
+              <div
+                className="ojt-mobile-only"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  width: '100%',
+                }}
+              >
+                {categoryBreakdown.map((row) => (
+                  <div
+                    key={row.category}
+                    style={{
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            backgroundColor: '#10b981',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#142b49' }}>
+                          {row.category}
+                        </span>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.95rem',
+                          fontWeight: 800,
+                          color: '#142b49',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >
+                        {row.hours} hrs
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 8,
+                          backgroundColor: '#e2e8f0',
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${Math.min(100, row.percentage)}%`,
+                            height: '100%',
+                            backgroundColor: '#10b981',
+                            borderRadius: 999,
+                          }}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: '#059669',
+                          fontVariantNumeric: 'tabular-nums',
+                          minWidth: 40,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {row.percentage}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </VStack>
           </Card>
         </VStack>

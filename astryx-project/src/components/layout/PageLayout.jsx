@@ -9,8 +9,8 @@ import { StackItem } from '@astryxdesign/core/Stack';
 export function PageLayout({ title, description, actions, children }) {
   return (
     <VStack gap={4}>
-      <HStack gap={3} align="center">
-        <StackItem size="fill">
+      <HStack gap={3} align="center" wrap="wrap" justify="between">
+        <StackItem size="fill" style={{ minWidth: 240 }}>
           <VStack gap={1}>
             <Heading level={1}>{title}</Heading>
             {description && (
@@ -20,7 +20,13 @@ export function PageLayout({ title, description, actions, children }) {
             )}
           </VStack>
         </StackItem>
-        {actions && <StackItem size="static">{actions}</StackItem>}
+        {actions && (
+          <StackItem size="static" style={{ maxWidth: '100%' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {actions}
+            </div>
+          </StackItem>
+        )}
       </HStack>
 
       <Section variant="section" padding={4}>

@@ -43,9 +43,11 @@ export function TopNavigation({ pageTitle, onNavigate }) {
     <TopNav
       label="Top Application Navigation"
       heading={
-        <Heading level={2} weight="semibold">
-          {pageTitle}
-        </Heading>
+        <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Heading level={2} weight="semibold">
+            {pageTitle}
+          </Heading>
+        </div>
       }
       endContent={
         <HStack gap={2} align="center">

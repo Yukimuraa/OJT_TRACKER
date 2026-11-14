@@ -10,7 +10,6 @@ import { Card } from '@astryxdesign/core/Card';
 import { Icon } from '@astryxdesign/core/Icon';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
-import { Table, pixel, proportional, useTableSortable } from '@astryxdesign/core/Table';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { DateInput } from '@astryxdesign/core/DateInput';
 import { Selector } from '@astryxdesign/core/Selector';
@@ -814,7 +813,15 @@ export function TimeLogs() {
   const [feedback, setFeedback] = useState(null);
 
   const [sort, setSort] = useState([{ sortKey: 'date', direction: 'descending' }]);
-  const sortPlugin = useTableSortable({ sort, onSortChange: setSort });
+
+  const handleToggleSort = (key) => {
+    setSort((prev) => {
+      if (prev.length > 0 && prev[0].sortKey === key) {
+        return [{ sortKey: key, direction: prev[0].direction === 'ascending' ? 'descending' : 'ascending' }];
+      }
+      return [{ sortKey: key, direction: 'descending' }];
+    });
+  };
 
   const sortedRecords = useMemo(() => {
     if (sort.length === 0) return [...records];
@@ -870,102 +877,6 @@ export function TimeLogs() {
     setFeedback({ type: 'success', message: 'Training record deleted successfully.' });
     setTimeout(() => setFeedback(null), 3500);
   };
-
-  const columns = [
-    {
-      key: 'date',
-      header: 'Date',
-      width: pixel(125),
-      sortable: true,
-      renderCell: (row) => <Text hasTabularNumbers weight="medium">{row.date}</Text>,
-    },
-    {
-      key: 'morning',
-      header: 'Morning Session',
-      width: pixel(185),
-      renderCell: (row) => {
-        if (!row.morningSession?.attended) {
-          return <Text size="sm" color="secondary">None</Text>;
-        }
-        return (
-          <Text size="sm">
-            {formatTime12h(row.morningSession.timeIn)}–{formatTime12h(row.morningSession.timeOut)} ({row.morningSession.durationHours}h)
-          </Text>
-        );
-      },
-    },
-    {
-      key: 'afternoon',
-      header: 'Afternoon Session',
-      width: pixel(185),
-      renderCell: (row) => {
-        if (!row.afternoonSession?.attended) {
-          return <Text size="sm" color="secondary">None</Text>;
-        }
-        return (
-          <Text size="sm">
-            {formatTime12h(row.afternoonSession.timeIn)}–{formatTime12h(row.afternoonSession.timeOut)} ({row.afternoonSession.durationHours}h)
-          </Text>
-        );
-      },
-    },
-    {
-      key: 'hours',
-      header: 'Total Hours',
-      width: pixel(125),
-      align: 'end',
-      sortable: true,
-      renderCell: (row) => (
-        <Text hasTabularNumbers weight="semibold" color="accent">
-          {row.hours} hrs
-        </Text>
-      ),
-    },
-    {
-      key: 'description',
-      header: 'Description / Tasks',
-      width: proportional(3),
-      renderCell: (row) => {
-        const desc = row.description || '—';
-        return (
-          <Text size="sm" color={row.description ? 'default' : 'secondary'}>
-            {desc.length > 70 ? `${desc.slice(0, 70)}…` : desc}
-          </Text>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      width: pixel(280),
-      align: 'end',
-      renderCell: (row) => (
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'nowrap', minWidth: 260 }}>
-          <Button
-            label="View"
-            variant="ghost"
-            size="sm"
-            icon={<Icon icon="search" size="sm" />}
-            onClick={() => setRecordToView(row)}
-          />
-          <Button
-            label="Edit"
-            variant="ghost"
-            size="sm"
-            icon={<Icon icon="wrench" size="sm" />}
-            onClick={() => handleEdit(row)}
-          />
-          <Button
-            label="Delete"
-            variant="ghost"
-            size="sm"
-            icon={<Icon icon="close" size="sm" />}
-            onClick={() => setRecordToDelete(row)}
-          />
-        </div>
-      ),
-    },
-  ];
 
   return (
     <PageLayout
@@ -1025,14 +936,438 @@ export function TimeLogs() {
                 }
               />
             ) : (
-              <Table
-                data={sortedRecords}
-                columns={columns}
-                idKey="id"
-                density="balanced"
-                dividers="rows"
-                plugins={[sortPlugin]}
-              />
+              <>
+                {/* Desktop & Tablet Table Layout (>= 769px) */}
+                <div
+                  className="ojt-desktop-only"
+                  style={{
+                    width: '100%',
+                    overflowX: 'auto',
+                    borderRadius: 12,
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      textAlign: 'left',
+                      minWidth: 840,
+                    }}
+                  >
+                    <thead>
+                      <tr
+                        style={{
+                          backgroundColor: '#f8fafc',
+                          borderBottom: '2px solid #e2e8f0',
+                        }}
+                      >
+                        <th
+                          onClick={() => handleToggleSort('date')}
+                          title="Click to sort by Date"
+                          style={{
+                            padding: '14px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            width: '15%',
+                            letterSpacing: '0.02em',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                          }}
+                        >
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Date
+                            <span style={{ fontSize: '0.75rem', color: sort[0]?.sortKey === 'date' ? '#10b981' : '#94a3b8' }}>
+                              {sort[0]?.sortKey === 'date' ? (sort[0].direction === 'ascending' ? '▲' : '▼') : '↕'}
+                            </span>
+                          </span>
+                        </th>
+                        <th
+                          style={{
+                            padding: '14px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            width: '19%',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          Morning Session
+                        </th>
+                        <th
+                          style={{
+                            padding: '14px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            width: '19%',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          Afternoon Session
+                        </th>
+                        <th
+                          onClick={() => handleToggleSort('hours')}
+                          title="Click to sort by Total Hours"
+                          style={{
+                            padding: '14px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            width: '13%',
+                            textAlign: 'right',
+                            letterSpacing: '0.02em',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                          }}
+                        >
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                            Total Hours
+                            <span style={{ fontSize: '0.75rem', color: sort[0]?.sortKey === 'hours' ? '#10b981' : '#94a3b8' }}>
+                              {sort[0]?.sortKey === 'hours' ? (sort[0].direction === 'ascending' ? '▲' : '▼') : '↕'}
+                            </span>
+                          </span>
+                        </th>
+                        <th
+                          style={{
+                            padding: '14px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            width: '16%',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          Tasks / Notes
+                        </th>
+                        <th
+                          style={{
+                            padding: '14px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#142b49',
+                            width: '18%',
+                            textAlign: 'right',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedRecords.map((row, idx) => {
+                        const morning = row.morningSession?.attended;
+                        const afternoon = row.afternoonSession?.attended;
+                        return (
+                          <tr
+                            key={row.id || idx}
+                            style={{
+                              borderBottom: idx < sortedRecords.length - 1 ? '1px solid #f1f5f9' : 'none',
+                              transition: 'background-color 0.15s',
+                            }}
+                          >
+                            {/* Date */}
+                            <td
+                              style={{
+                                padding: '14px 16px',
+                                fontSize: '0.9rem',
+                                fontWeight: 700,
+                                color: '#142b49',
+                                fontVariantNumeric: 'tabular-nums',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <span>{row.date}</span>
+                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+                                  {formatFullDate(row.date).split(',')[0]}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Morning Session */}
+                            <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
+                              {morning ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  <span style={{ fontWeight: 600, color: '#142b49' }}>
+                                    {formatTime12h(row.morningSession.timeIn)} – {formatTime12h(row.morningSession.timeOut)}
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600 }}>
+                                    {row.morningSession.durationHours} hrs rendered
+                                  </span>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>None</span>
+                              )}
+                            </td>
+
+                            {/* Afternoon Session */}
+                            <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
+                              {afternoon ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  <span style={{ fontWeight: 600, color: '#142b49' }}>
+                                    {formatTime12h(row.afternoonSession.timeIn)} – {formatTime12h(row.afternoonSession.timeOut)}
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600 }}>
+                                    {row.afternoonSession.durationHours} hrs rendered
+                                  </span>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>None</span>
+                              )}
+                            </td>
+
+                            {/* Total Hours */}
+                            <td
+                              style={{
+                                padding: '14px 16px',
+                                textAlign: 'right',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                  color: '#059669',
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem',
+                                  padding: '4px 10px',
+                                  borderRadius: 8,
+                                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                                  fontVariantNumeric: 'tabular-nums',
+                                }}
+                              >
+                                {row.hours} hrs
+                              </span>
+                            </td>
+
+                            {/* Tasks / Notes */}
+                            <td
+                              style={{
+                                padding: '14px 16px',
+                                fontSize: '0.85rem',
+                                color: row.description ? '#334155' : '#94a3b8',
+                                maxWidth: 220,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {row.description || '—'}
+                              </div>
+                            </td>
+
+                            {/* Actions Column */}
+                            <td
+                              style={{
+                                padding: '14px 16px',
+                                textAlign: 'right',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  gap: 6,
+                                  justifyContent: 'flex-end',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <Button
+                                  label="View"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={<Icon icon="search" size="sm" />}
+                                  onClick={() => setRecordToView(row)}
+                                />
+                                <Button
+                                  label="Edit"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={<Icon icon="wrench" size="sm" />}
+                                  onClick={() => handleEdit(row)}
+                                />
+                                <Button
+                                  label="Delete"
+                                  variant="ghost"
+                                  size="sm"
+                                  icon={<Icon icon="close" size="sm" />}
+                                  onClick={() => setRecordToDelete(row)}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Responsive Record Cards (<= 768px) */}
+                <div
+                  className="ojt-mobile-only"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    width: '100%',
+                  }}
+                >
+                  {sortedRecords.map((row) => {
+                    const morning = row.morningSession?.attended;
+                    const afternoon = row.afternoonSession?.attended;
+                    return (
+                      <div
+                        key={row.id || row.date}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          border: '1.5px solid #e2e8f0',
+                          borderRadius: 14,
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 12,
+                          boxShadow: '0 1px 3px rgba(20, 43, 73, 0.04)',
+                        }}
+                      >
+                        {/* Header: Date + Activity + Hours */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                            borderBottom: '1px solid #f1f5f9',
+                            paddingBottom: 10,
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#142b49' }}>
+                              {row.date}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                              {formatFullDate(row.date)}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {row.activity && (
+                              <span
+                                style={{
+                                  fontSize: '0.75rem',
+                                  backgroundColor: '#f1f5f9',
+                                  color: '#475569',
+                                  padding: '3px 8px',
+                                  borderRadius: 6,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {row.activity}
+                              </span>
+                            )}
+                            <span
+                              style={{
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                color: '#059669',
+                                fontWeight: 800,
+                                fontSize: '0.9rem',
+                                padding: '4px 10px',
+                                borderRadius: 8,
+                                border: '1px solid rgba(16, 185, 129, 0.25)',
+                              }}
+                            >
+                              +{row.hours}h
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Sessions Chips */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.825rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#64748b', fontWeight: 600 }}>Morning Session:</span>
+                            <span style={{ fontWeight: 600, color: morning ? '#142b49' : '#94a3b8' }}>
+                              {morning
+                                ? `${formatTime12h(row.morningSession.timeIn)} – ${formatTime12h(row.morningSession.timeOut)} (${row.morningSession.durationHours}h)`
+                                : 'None'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#64748b', fontWeight: 600 }}>Afternoon Session:</span>
+                            <span style={{ fontWeight: 600, color: afternoon ? '#142b49' : '#94a3b8' }}>
+                              {afternoon
+                                ? `${formatTime12h(row.afternoonSession.timeIn)} – ${formatTime12h(row.afternoonSession.timeOut)} (${row.afternoonSession.durationHours}h)`
+                                : 'None'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Tasks / Description */}
+                        {row.description && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: 8,
+                              padding: '10px 12px',
+                              fontSize: '0.825rem',
+                              color: '#334155',
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            <span style={{ fontWeight: 700, color: '#142b49', display: 'block', marginBottom: 2 }}>
+                              Tasks Accomplished:
+                            </span>
+                            {row.description}
+                          </div>
+                        )}
+
+                        {/* Mobile Actions Bar */}
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gap: 8,
+                            paddingTop: 4,
+                          }}
+                        >
+                          <Button
+                            label="View"
+                            variant="secondary"
+                            size="sm"
+                            icon={<Icon icon="search" size="sm" />}
+                            onClick={() => setRecordToView(row)}
+                          />
+                          <Button
+                            label="Edit"
+                            variant="secondary"
+                            size="sm"
+                            icon={<Icon icon="wrench" size="sm" />}
+                            onClick={() => handleEdit(row)}
+                          />
+                          <Button
+                            label="Delete"
+                            variant="destructive"
+                            size="sm"
+                            icon={<Icon icon="close" size="sm" />}
+                            onClick={() => setRecordToDelete(row)}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </VStack>
         </Card>

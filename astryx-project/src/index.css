@@ -36,6 +36,17 @@ html[data-theme="light"],
   --color-shadow: rgba(20, 43, 73, 0.06);
 }
 
+@keyframes ojtSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Base Body Styling */
 html {
   min-height: 100%;
@@ -70,6 +81,7 @@ body {
   color: var(--color-text-primary, #142b49);
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* Constrained centered content containers for landing sections */
@@ -78,6 +90,166 @@ body {
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  padding-inline: clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+}
+
+/* Responsive typography utilities */
+.ojt-hero-headline {
+  font-size: clamp(2rem, 5.2vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #142b49;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.ojt-section-headline {
+  font-size: clamp(1.5rem, 3.8vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: #142b49;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.ojt-lead-text {
+  font-size: clamp(0.95rem, 1.8vw, 1.125rem);
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Pill badge */
+.ojt-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #059669;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+
+/* SaaS feature card */
+.ojt-card-hover {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  border-radius: 16px;
+  height: 100%;
+}
+
+.ojt-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -6px rgba(20, 43, 73, 0.09), 0 0 0 1px rgba(16, 185, 129, 0.25);
+}
+
+/* Dashboard Mockup Container */
+.ojt-dashboard-mockup {
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 24px 48px -12px rgba(20, 43, 73, 0.12),
+    0 4px 16px -2px rgba(20, 43, 73, 0.04),
+    0 0 0 1px rgba(20, 43, 73, 0.04);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+/* ── Top Scroll Progress Bar ──────────────────────────────────── */
+#ojt-scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  z-index: 9999;
+  transition: width 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
+}
+
+/* ── Scroll Reveal Animations ─────────────────────────────────── */
+.ojt-reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.ojt-reveal-on-scroll.ojt-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ojt-delay-100 {
+  transition-delay: 100ms;
+}
+
+.ojt-delay-200 {
+  transition-delay: 200ms;
+}
+
+.ojt-delay-300 {
+  transition-delay: 300ms;
+}
+
+/* Respect user accessibility motion settings */
+@media (prefers-reduced-motion: reduce) {
+  .ojt-reveal-on-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  #ojt-scroll-progress-bar {
+    transition: none !important;
+  }
+
+  .ojt-card-hover {
+    transition: none !important;
+  }
+}
+
+/* Mobile & Desktop Nav Helpers */
+@media (min-width: 769px) {
+  .ojt-mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .ojt-desktop-only {
+    display: none !important;
+  }
+}
+
+/* Responsive Table Wrapper */
+.ojt-table-scroll-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  position: relative;
+}
+
+/* Prevent fixed-width overflows across small phones */
+@media (max-width: 480px) {
+  .ojt-mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .ojt-mobile-full {
+    width: 100% !important;
+  }
 }
 
 /* iOS-Style Wheel Picker Styles */

@@ -199,7 +199,7 @@ export function Profile() {
         </Card>
 
         {/* Two-Column Details Grid */}
-        <Grid columns={{ minWidth: 320, max: 2 }} gap={4}>
+        <Grid columns={{ minWidth: 260, max: 2 }} gap={4}>
           {/* Card 1: Academic Information */}
           <Card elevation="low" padding={5}>
             <VStack gap={4}>

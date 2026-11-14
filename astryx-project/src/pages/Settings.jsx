@@ -95,7 +95,7 @@ export function Settings({ onNavigate }) {
           />
         )}
 
-        <Grid columns={{ minWidth: 320, max: 2 }} gap={4}>
+        <Grid columns={{ minWidth: 260, max: 2 }} gap={4}>
           <InstallAppCard />
 
           {/* Section 0: Onboarding Setup Configuration */}

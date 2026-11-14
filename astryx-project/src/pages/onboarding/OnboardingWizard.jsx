@@ -826,7 +826,7 @@ export function OnboardingWizard({ onComplete }) {
 
             {/* Wizard Navigation Action Bar */}
             <Card elevation="low" padding={4}>
-              <HStack justify="between" align="center">
+              <HStack justify="between" align="center" wrap="wrap" gap={3}>
                 <Button
                   label="Back"
                   variant="secondary"
@@ -834,7 +834,7 @@ export function OnboardingWizard({ onComplete }) {
                   onClick={handleBack}
                 />
 
-                <HStack gap={2}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {activeStep < 3 ? (
                     <Button
                       label="Continue"
@@ -849,7 +849,7 @@ export function OnboardingWizard({ onComplete }) {
                       onClick={handleComplete}
                     />
                   )}
-                </HStack>
+                </div>
               </HStack>
             </Card>
           </VStack>

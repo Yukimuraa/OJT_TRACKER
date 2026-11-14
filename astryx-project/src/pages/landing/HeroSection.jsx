@@ -1,164 +1,505 @@
 import React from 'react';
 import { Section } from '@astryxdesign/core/Section';
-import { VStack } from '@astryxdesign/core/VStack';
-import { HStack } from '@astryxdesign/core/HStack';
-import { StackItem } from '@astryxdesign/core/Stack';
-import { Heading } from '@astryxdesign/core/Heading';
-import { Text } from '@astryxdesign/core/Text';
-import { Button } from '@astryxdesign/core/Button';
-import { Card } from '@astryxdesign/core/Card';
-import { ProgressBar } from '@astryxdesign/core/ProgressBar';
-import { StatusDot } from '@astryxdesign/core/StatusDot';
-import { Icon } from '@astryxdesign/core/Icon';
-import { CheckCircleIcon, HourglassIcon } from '../../components/common/BrandIcons';
+import {
+  CheckCircleIcon,
+  HourglassIcon,
+  TrendingUpIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+} from '../../components/common/BrandIcons';
 
-const DEMO_COMPLETED = 142;
+const DEMO_COMPLETED = 184;
 const DEMO_REQUIRED = 600;
 const DEMO_REMAINING = DEMO_REQUIRED - DEMO_COMPLETED;
 const DEMO_RATE = Math.round((DEMO_COMPLETED / DEMO_REQUIRED) * 100);
 
-const DEMO_RECORDS = [
-  { date: 'Nov 08, 2026', activity: 'Development', hours: 8 },
-  { date: 'Nov 07, 2026', activity: 'Team Meeting', hours: 2 },
-  { date: 'Nov 06, 2026', activity: 'Research', hours: 6 },
+const DEMO_LOGS = [
+  {
+    date: 'Today',
+    tag: 'Development',
+    morning: '8:00 AM – 12:00 PM',
+    afternoon: '1:00 PM – 5:00 PM',
+    hours: '8.0',
+    desc: 'Implemented frontend user authentication and responsive layout components.',
+  },
+  {
+    date: 'Yesterday',
+    tag: 'Database & API',
+    morning: '8:00 AM – 12:00 PM',
+    afternoon: '1:00 PM – 5:00 PM',
+    hours: '8.0',
+    desc: 'Designed PostgreSQL schemas and verified foreign key integrity.',
+  },
+  {
+    date: 'Nov 12, 2026',
+    tag: 'Sprint Review',
+    morning: '9:00 AM – 12:00 PM',
+    afternoon: '1:00 PM – 4:00 PM',
+    hours: '6.0',
+    desc: 'Participated in bi-weekly sprint demo with company mentor and team.',
+  },
 ];
 
-function DashboardPreview() {
+function ProductMockup() {
   return (
-    <Card elevation="low" padding={4}>
-      <VStack gap={4}>
-        <HStack justify="between" align="center" wrap="wrap" gap={1}>
-          <Heading level={3}>OJT Dashboard</Heading>
-          <Text size="sm" type="supporting" color="secondary">
-            Illustrative preview · not real data
-          </Text>
-        </HStack>
+    <div className="ojt-dashboard-mockup">
+      {/* Browser Window Header Chrome */}
+      <div
+        style={{
+          backgroundColor: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
+          padding: '12px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: '#f87171' }} />
+          <div style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: '#fbbf24' }} />
+          <div style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: '#34d399' }} />
+        </div>
 
-        {/* KPI strip */}
-        <HStack gap={2} wrap="wrap">
-          <StackItem size="fill">
-            <Card variant="muted" padding={3}>
-              <VStack gap={1}>
-                <HStack gap={1} align="center">
-                  <Icon icon="clock" size="sm" color="accent" />
-                  <Text size="sm" weight="medium" color="secondary">Required</Text>
-                </HStack>
-                <Heading level={3}>{DEMO_REQUIRED} hrs</Heading>
-              </VStack>
-            </Card>
-          </StackItem>
-          <StackItem size="fill">
-            <Card variant="muted" padding={3}>
-              <VStack gap={1}>
-                <HStack gap={1} align="center">
-                  <Icon icon={CheckCircleIcon} size="sm" color="accent" />
-                  <Text size="sm" weight="medium" color="secondary">Completed</Text>
-                </HStack>
-                <Heading level={3}>{DEMO_COMPLETED} hrs</Heading>
-              </VStack>
-            </Card>
-          </StackItem>
-          <StackItem size="fill">
-            <Card variant="muted" padding={3}>
-              <VStack gap={1}>
-                <HStack gap={1} align="center">
-                  <Icon icon={HourglassIcon} size="sm" color="accent" />
-                  <Text size="sm" weight="medium" color="secondary">Remaining</Text>
-                </HStack>
-                <Heading level={3}>{DEMO_REMAINING} hrs</Heading>
-              </VStack>
-            </Card>
-          </StackItem>
-        </HStack>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: '0.785rem',
+            color: '#64748b',
+            fontWeight: 600,
+            backgroundColor: '#ffffff',
+            padding: '3px 12px',
+            borderRadius: 6,
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+          <span>app.ojt-tracker.ph/dashboard</span>
+        </div>
 
-        {/* Progress bar */}
-        <VStack gap={1.5}>
-          <HStack justify="between" align="center">
-            <Text size="sm" weight="medium">Overall Progress</Text>
-            <Text size="sm" weight="semibold" color="accent">{DEMO_RATE}%</Text>
-          </HStack>
-          <ProgressBar
-            label="OJT completion progress"
-            value={DEMO_COMPLETED}
-            max={DEMO_REQUIRED}
-            variant="accent"
-            hasValueLabel
-            formatValueLabel={(v, m) => `${v} / ${m} hrs`}
-          />
-        </VStack>
+        <div style={{ width: 44 }} />
+      </div>
 
-        {/* Recent activity */}
-        <VStack gap={2}>
-          <Text size="sm" weight="medium">Recent Activity</Text>
-          {DEMO_RECORDS.map((r, i) => (
-            <HStack key={i} justify="between" align="center">
-              <HStack gap={2} align="center">
-                <StatusDot variant="success" label="Approved" />
-                <VStack gap={0}>
-                  <Text size="sm" weight="medium">{r.activity}</Text>
-                  <Text size="sm" color="secondary">{r.date}</Text>
-                </VStack>
-              </HStack>
-              <Text size="sm" weight="semibold" hasTabularNumbers>
-                {r.hours} hrs
-              </Text>
-            </HStack>
-          ))}
-        </VStack>
-      </VStack>
-    </Card>
+      {/* Main Mockup Body */}
+      <div style={{ padding: ' clamp(16px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* Trainee Profile Bar */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            borderBottom: '1px solid #f1f5f9',
+            paddingBottom: 14,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                backgroundColor: '#142b49',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '1rem',
+              }}
+            >
+              JD
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1rem', fontWeight: 700, color: '#142b49' }}>
+                  John Doe
+                </span>
+                <span
+                  style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    color: '#059669',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: 9999,
+                  }}
+                >
+                  Active Trainee
+                </span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 2 }}>
+                BS Information Technology · CHMSU Talisay
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              color: '#142b49',
+              fontWeight: 600,
+            }}
+          >
+            <DocumentTextIcon style={{ width: 16, height: 16, color: '#10b981' }} />
+            <span>DTTR Report Ready</span>
+          </div>
+        </div>
+
+        {/* 4 Metric Cards */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {/* Required */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#64748b' }}>
+              <ClockIcon style={{ width: 14, height: 14, color: '#64748b' }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Required</span>
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#142b49' }}>
+              {DEMO_REQUIRED}{' '}
+              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>hrs</span>
+            </div>
+          </div>
+
+          {/* Completed */}
+          <div
+            style={{
+              backgroundColor: 'rgba(16, 185, 129, 0.05)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              borderRadius: 12,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#059669' }}>
+              <CheckCircleIcon style={{ width: 14, height: 14 }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Rendered</span>
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669' }}>
+              {DEMO_COMPLETED}{' '}
+              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#059669' }}>hrs</span>
+            </div>
+          </div>
+
+          {/* Remaining */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#64748b' }}>
+              <HourglassIcon style={{ width: 14, height: 14, color: '#d97706' }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Remaining</span>
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#142b49' }}>
+              {DEMO_REMAINING}{' '}
+              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>hrs</span>
+            </div>
+          </div>
+
+          {/* Completion Rate */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#64748b' }}>
+              <TrendingUpIcon style={{ width: 14, height: 14, color: '#10b981' }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Rate</span>
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>
+              {DEMO_RATE}%
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar Container */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#142b49' }}>
+              Cumulative Requirement Progress
+            </span>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#10b981' }}>
+              {DEMO_COMPLETED} / {DEMO_REQUIRED} hrs
+            </span>
+          </div>
+
+          <div
+            style={{
+              width: '100%',
+              height: 10,
+              backgroundColor: '#e2e8f0',
+              borderRadius: 9999,
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                width: `${DEMO_RATE}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+                borderRadius: 9999,
+                transition: 'width 0.8s ease',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Recent Daily Time Log Snippet */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#142b49' }}>
+              Latest Verified Entries
+            </span>
+            <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>
+              Live Log Sync
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {DEMO_LOGS.map((item, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: 10,
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #f1f5f9',
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: '#10b981',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#142b49' }}>
+                        {item.date}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.6875rem',
+                          backgroundColor: '#e2e8f0',
+                          padding: '1px 6px',
+                          borderRadius: 4,
+                          color: '#475569',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.tag}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        color: '#64748b',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {item.desc}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 800,
+                    color: '#142b49',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  +{item.hours}h
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function HeroSection({ onRegister }) {
   return (
-    <Section id="home" variant="transparent" paddingBlock={10} paddingInline={6}>
+    <Section id="home" variant="transparent" paddingBlock={8} paddingInline={0}>
       <div className="ojt-landing-container">
-        <HStack gap={8} align="center" wrap="wrap">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            alignItems: 'center',
+            gap: 'clamp(28px, 5vw, 64px)',
+            paddingTop: 'clamp(16px, 4vw, 36px)',
+            paddingBottom: 'clamp(24px, 5vw, 48px)',
+          }}
+        >
           {/* Left Column: Heading, description, CTA buttons */}
-          <StackItem size="fill">
-            <VStack gap={6}>
-              <VStack gap={3}>
-                <Text weight="semibold" color="accent" size="sm">
-                  Student OJT Management
-                </Text>
-                <Heading level={1}>
-                  Track Your Internship Hours.{' '}
-                  Stay on Track.{' '}
-                  Reach Your Goals.
-                </Heading>
-                <Text type="body" color="secondary">
-                  An easier way to organize your On-the-Job Training journey.
-                  Record your daily hours, monitor your progress, and stay on
-                  track toward completing your required training hours.
-                </Text>
-              </VStack>
-              <HStack gap={3} wrap="wrap">
-                <Button
-                  label="Get Started"
-                  variant="primary"
-                  size="lg"
-                  onClick={onRegister}
-                />
-                <Button
-                  label="Explore Features"
-                  variant="secondary"
-                  size="lg"
-                  onClick={() =>
-                    document
-                      .getElementById('features')
-                      ?.scrollIntoView({ behavior: 'smooth' })
-                  }
-                />
-              </HStack>
-            </VStack>
-          </StackItem>
+          <div className="ojt-reveal-on-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Pill badge */}
+            <div className="ojt-badge-pill">
+              <SparklesIcon style={{ width: 14, height: 14 }} />
+              <span>Built for Student Interns &amp; On-the-Job Training</span>
+            </div>
+
+            {/* Main Headline */}
+            <h1 className="ojt-hero-headline">
+              Track Your OJT Hours.{' '}
+              <span style={{ color: '#10b981' }}>Stay on Top of Your Progress.</span>
+            </h1>
+
+            {/* Supporting description */}
+            <p className="ojt-lead-text">
+              The modern web platform to record daily time logs, monitor rendered hours toward your
+              degree requirement, track activities, and generate official college DTTR PDF reports in
+              seconds.
+            </p>
+
+            {/* CTA button row */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                flexWrap: 'wrap',
+              }}
+            >
+              <button
+                type="button"
+                onClick={onRegister}
+                style={{
+                  height: 50,
+                  padding: '0 26px',
+                  borderRadius: 12,
+                  border: 'none',
+                  backgroundColor: '#10b981',
+                  color: '#ffffff',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  boxShadow: '0 8px 20px -4px rgba(16, 185, 129, 0.4)',
+                  transition: 'background-color 0.15s, transform 0.15s',
+                }}
+              >
+                <span>Get Started Free</span>
+                <ArrowRightIcon style={{ width: 18, height: 18 }} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  height: 50,
+                  padding: '0 22px',
+                  borderRadius: 12,
+                  border: '1.5px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#142b49',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'border-color 0.15s, background-color 0.15s',
+                }}
+              >
+                <span>Explore Features</span>
+              </button>
+            </div>
+
+            {/* Trust check points */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 20,
+                flexWrap: 'wrap',
+                paddingTop: 8,
+                borderTop: '1px solid #f1f5f9',
+                fontSize: '0.85rem',
+                color: '#64748b',
+                fontWeight: 600,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircleIcon style={{ width: 16, height: 16, color: '#10b981' }} />
+                <span>100% Free for Students</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircleIcon style={{ width: 16, height: 16, color: '#10b981' }} />
+                <span>Installable PWA</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircleIcon style={{ width: 16, height: 16, color: '#10b981' }} />
+                <span>Official DTTR Long Bond Format</span>
+              </div>
+            </div>
+          </div>
 
           {/* Right Column: Dashboard preview */}
-          <StackItem size="fill">
-            <DashboardPreview />
-          </StackItem>
-        </HStack>
+          <div className="ojt-reveal-on-scroll ojt-delay-100" style={{ width: '100%', minWidth: 0 }}>
+            <ProductMockup />
+          </div>
+        </div>
       </div>
     </Section>
   );

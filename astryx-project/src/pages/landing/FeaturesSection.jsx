@@ -1,77 +1,171 @@
 import React from 'react';
 import { Section } from '@astryxdesign/core/Section';
-import { VStack } from '@astryxdesign/core/VStack';
-import { HStack } from '@astryxdesign/core/HStack';
-import { Grid } from '@astryxdesign/core/Grid';
-import { Heading } from '@astryxdesign/core/Heading';
-import { Text } from '@astryxdesign/core/Text';
-import { Card } from '@astryxdesign/core/Card';
-import { Icon } from '@astryxdesign/core/Icon';
+import {
+  ClockIcon,
+  CalendarIcon,
+  ClipboardCheckIcon,
+  PrinterIcon,
+  TrendingUpIcon,
+  DeviceMobileIcon,
+  SparklesIcon,
+} from '../../components/common/BrandIcons';
 
 const FEATURES = [
   {
-    icon: 'clock',
-    title: 'Easy Time Tracking',
+    icon: ClockIcon,
+    title: 'OJT Hour Tracking',
+    badge: 'Core Engine',
     description:
-      'Record your daily training hours and activities in seconds. Log the date, category, and hours rendered — your progress updates automatically.',
+      'Log and calculate cumulative hours rendered toward your 600-hour or customized curriculum requirement with minute-level precision and zero guesswork.',
   },
   {
-    icon: 'arrowUp',
-    title: 'Monitor Your Progress',
+    icon: CalendarIcon,
+    title: 'Daily Time Logs',
+    badge: 'Two-Session Support',
     description:
-      'See completed hours and remaining hours toward your 600-hour requirement in real time. A clear progress bar keeps you on track every day.',
+      'Record dual morning and afternoon sessions with precise arrival and departure times, automatic lunch break handling, and weekend status indicators.',
   },
   {
-    icon: 'arrowsUpDown',
-    title: 'Training Reports',
+    icon: ClipboardCheckIcon,
+    title: 'Training Activities',
+    badge: 'Structured Logs',
     description:
-      'Review your complete recorded training history. Filter and sort your logs to understand how your time is being spent throughout your internship.',
+      'Categorize daily work into Development, Research, Testing, and Meetings with detailed task descriptions preserved without truncation.',
+  },
+  {
+    icon: PrinterIcon,
+    title: 'DTTR PDF Generation',
+    badge: 'Official Template',
+    description:
+      'Generate one-page, print-ready Daily Time & Tasks Records in official 8.5" × 13" portrait long bond paper format with centered university branding and signatures.',
+  },
+  {
+    icon: TrendingUpIcon,
+    title: 'Progress Monitoring',
+    badge: 'Real-Time Insights',
+    description:
+      'Track 25%, 50%, 75%, and 100% milestone completions alongside projected graduation and training completion dates tailored to your weekly work schedule.',
+  },
+  {
+    icon: DeviceMobileIcon,
+    title: 'Installable PWA',
+    badge: 'Offline-Ready',
+    description:
+      'Add to your home screen or desktop with one click. Enjoy a fast, standalone application experience powered by modern service workers and asset caching.',
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <Section id="features" variant="muted" paddingBlock={10} paddingInline={6}>
+    <Section id="features" variant="muted" paddingBlock={10} paddingInline={0}>
       <div className="ojt-landing-container">
-        <VStack gap={8}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
           {/* Header */}
-          <VStack gap={2} align="center">
-            <Heading level={2} align="center">
-              Everything You Need to Manage Your OJT
-            </Heading>
-            <Text type="body" color="secondary" align="center" maxWidth={600}>
-              Purpose-built tools for student interns to stay organized throughout their training.
-            </Text>
-          </VStack>
+          <div
+            className="ojt-reveal-on-scroll"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: 12,
+              maxWidth: 720,
+              margin: '0 auto',
+            }}
+          >
+            <div className="ojt-badge-pill">
+              <SparklesIcon style={{ width: 14, height: 14 }} />
+              <span>Comprehensive Toolkit</span>
+            </div>
+            <h2 className="ojt-section-headline">
+              Everything You Need to Master Your OJT
+            </h2>
+            <p className="ojt-lead-text">
+              Built from the ground up to solve the real administrative headaches of student
+              internships, attendance logging, and college report submissions.
+            </p>
+          </div>
 
-          {/* Feature cards */}
-          <Grid columns={{ minWidth: 280, max: 3 }} gap={4}>
-            {FEATURES.map(({ icon, title, description }) => (
-              <Card key={title} padding={5} elevation="low">
-                <VStack gap={4}>
-                  <HStack
-                    align="center"
-                    justify="center"
+          {/* 6 Feature cards Grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: 20,
+            }}
+          >
+            {FEATURES.map(({ icon: IconComponent, title, badge, description }, idx) => (
+              <div
+                key={title}
+                className={`ojt-card-hover ojt-reveal-on-scroll ojt-delay-${((idx % 3) + 1) * 100}`}
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  padding: '28px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  boxShadow: '0 1px 4px rgba(20, 43, 73, 0.04)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--color-accent-muted)',
+                      width: 50,
+                      height: 50,
+                      borderRadius: 14,
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      color: '#10b981',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Icon icon={icon} size="md" color="accent" />
-                  </HStack>
-                  <VStack gap={1.5}>
-                    <Heading level={3}>{title}</Heading>
-                    <Text type="body" color="secondary">
-                      {description}
-                    </Text>
-                  </VStack>
-                </VStack>
-              </Card>
+                    <IconComponent style={{ width: 26, height: 26 }} />
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: '#059669',
+                      backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                      padding: '4px 10px',
+                      borderRadius: 9999,
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                    }}
+                  >
+                    {badge}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h3
+                    style={{
+                      fontSize: '1.25rem',
+                      fontWeight: 800,
+                      color: '#142b49',
+                      margin: 0,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {title}
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '0.925rem',
+                      color: '#64748b',
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    {description}
+                  </p>
+                </div>
+              </div>
             ))}
-          </Grid>
-        </VStack>
+          </div>
+        </div>
       </div>
     </Section>
   );
