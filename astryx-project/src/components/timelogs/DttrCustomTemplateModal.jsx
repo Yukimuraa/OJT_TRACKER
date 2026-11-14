@@ -13,7 +13,7 @@
  *   onSaved (callback after a new upload is saved — returns to selector),
  *   onBack  (go back to template selector)
  */
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -32,6 +32,7 @@ import {
   updateUserTemplate,
   readPdfFile,
 } from '../../services/dttrTemplateService';
+import { generatePopulatedDttrPdf } from '../../services/dttrPdfGenerator';
 
 /* ── Shared constants ────────────────────────────────────────────────────── */
 const MONTH_NAMES = [
@@ -225,17 +226,39 @@ function UploadContent({ userId, onSaved, onBack, onOpenChange }) {
               placeholder="e.g. My College DTR"
             />
 
-            {/* PDF preview */}
-            <div style={{
-              width: '100%', height: 420, borderRadius: 10,
-              overflow: 'hidden', border: '1px solid #e2e8f0',
-              backgroundColor: '#f1f5f9',
-            }}>
-              <iframe
-                src={`${pdfData.dataUrl}#toolbar=1&navpanes=0`}
-                title="PDF Preview"
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
+            {/* PDF preview — Clean centered paper view without dark frame */}
+            <div
+              style={{
+                width: '100%',
+                borderRadius: 10,
+                border: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc',
+                padding: '20px 12px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: 320,
+                  maxWidth: '100%',
+                  aspectRatio: '612 / 936',
+                  height: 489,
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <iframe
+                  src={`${pdfData.dataUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                  title="PDF Preview"
+                  style={{ width: '100%', height: '100%', border: 'none', display: 'block', backgroundColor: '#ffffff' }}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -304,15 +327,20 @@ function UploadContent({ userId, onSaved, onBack, onOpenChange }) {
 
 /* ── Generate / print step (custom template) ─────────────────────────────── */
 function GenerateContent({ userId, currentUser, records, template, onBack, onOpenChange }) {
+  const isCustomTemplate = !template?.isSystem;
   const [selectedYear, setSelectedYear] = useState(() => String(DEFAULT_YEAR));
   const [selectedMonth, setSelectedMonth] = useState(() => String(DEFAULT_MONTH));
   const [showSettings, setShowSettings] = useState(false);
   const [showMapping, setShowMapping] = useState(false);
-  const [activeTab, setActiveTab] = useState('report'); // 'report' | 'pdf'
+  const [activeTab, setActiveTab] = useState(() => (isCustomTemplate ? 'pdf' : 'report'));
+  const [zoomPercent, setZoomPercent] = useState(100);
   const [headerInfo, setHeaderInfo] = useState(() => getHeaderInfo(userId, currentUser));
   const [draftInfo, setDraftInfo] = useState(headerInfo);
   const [fieldMap, setFieldMap] = useState(() => template.fieldMap || {});
   const [feedback, setFeedback] = useState(null);
+  const [populatedPdfUrl, setPopulatedPdfUrl] = useState(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfGenError, setPdfGenError] = useState(null);
 
   const { monthRows, totalHours, recordedDaysCount, monthName } = useMemo(() => {
     const yr = parseInt(selectedYear, 10) || DEFAULT_YEAR;
@@ -355,7 +383,83 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
     return { monthRows: rows, totalHours: Math.round(sumHours * 10) / 10, recordedDaysCount: daysWithRecords, monthName: mName };
   }, [selectedYear, selectedMonth, records]);
 
-  const handlePrint = () => window.print();
+  useEffect(() => {
+    let isMounted = true;
+    let currentObjectUrl = null;
+
+    async function generate() {
+      if (!template?.dataUrl) return;
+      setIsGeneratingPdf(true);
+      setPdfGenError(null);
+      try {
+        const pdfBytes = await generatePopulatedDttrPdf({
+          templatePdfDataUrl: template.dataUrl,
+          headerInfo,
+          monthRows,
+          totalHours,
+          monthName,
+          selectedYear,
+          fieldMap,
+        });
+
+        if (!isMounted) return;
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        currentObjectUrl = URL.createObjectURL(blob);
+        setPopulatedPdfUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return currentObjectUrl;
+        });
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Failed to generate populated DTTR PDF:', err);
+        setPdfGenError(err.message || 'Unable to populate PDF template.');
+      } finally {
+        if (isMounted) setIsGeneratingPdf(false);
+      }
+    }
+
+    generate();
+
+    return () => {
+      isMounted = false;
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+      }
+    };
+  }, [template?.dataUrl, headerInfo, monthRows, totalHours, monthName, selectedYear, fieldMap]);
+
+  const handleDownloadPdf = () => {
+    const url = populatedPdfUrl || template?.dataUrl;
+    if (!url) return;
+    const studentSlug = (headerInfo.studentName || 'Student').trim().replace(/[^a-zA-Z0-9_-]+/g, '_');
+    const safeMonth = (monthName || 'Month').trim();
+    const safeYear = (selectedYear || '').trim();
+    const fileName = `DTTR_${studentSlug}_${safeMonth}_${safeYear}.pdf`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    if (!isCustomTemplate && activeTab === 'report') {
+      window.print();
+    } else {
+      if (populatedPdfUrl) {
+        const printWindow = window.open(populatedPdfUrl, '_blank');
+        if (printWindow) {
+          printWindow.focus();
+        } else {
+          handleDownloadPdf();
+        }
+      } else {
+        window.print();
+      }
+    }
+  };
 
   const handleSaveFieldMap = () => {
     try {
@@ -443,28 +547,30 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
                 Report: <strong>{monthName} {selectedYear}</strong> · <strong>{recordedDaysCount}</strong> days · Total: <strong>{totalHours.toFixed(1)} hrs</strong>
               </Text>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('report')}
-                  style={{
-                    fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 6,
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: activeTab === 'report' ? '#10b981' : '#ffffff',
-                    color: activeTab === 'report' ? '#ffffff' : '#334155',
-                    cursor: 'pointer',
-                  }}
-                >
-                  DTTR Report
-                </button>
+                {!isCustomTemplate && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report')}
+                    style={{
+                      fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 6,
+                      border: '1px solid #e2e8f0',
+                      backgroundColor: activeTab === 'report' ? '#10b981' : '#ffffff',
+                      color: activeTab === 'report' ? '#ffffff' : '#334155',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    DTTR Report
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setActiveTab('pdf')}
                   style={{
-                    fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 6,
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: activeTab === 'pdf' ? '#10b981' : '#ffffff',
-                    color: activeTab === 'pdf' ? '#ffffff' : '#334155',
-                    cursor: 'pointer',
+                    fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 6,
+                    border: '1px solid #10b981',
+                    backgroundColor: '#10b981',
+                    color: '#ffffff',
+                    cursor: isCustomTemplate ? 'default' : 'pointer',
                   }}
                 >
                   Original PDF
@@ -517,29 +623,204 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
           </VStack>
         </Card>
 
-        {/* Original PDF viewer tab */}
+        {/* Original / Populated PDF viewer tab — Clean white preview with zoom controls */}
         {!showSettings && !showMapping && activeTab === 'pdf' && (
-          <div
-            className="no-print"
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              overflow: 'hidden',
-              height: 700,
-            }}
-          >
-            <iframe
-              src={`${template.dataUrl}#toolbar=1&navpanes=0`}
-              title="Original Template PDF"
-              style={{ width: '100%', height: '100%', border: 'none' }}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {isGeneratingPdf && (
+              <Banner
+                status="info"
+                title="Populating DTTR Template"
+              >
+                Rendering your training records onto the uploaded PDF template...
+              </Banner>
+            )}
+
+            {pdfGenError && (
+              <Banner
+                status="error"
+                title="Template Population Warning"
+                isDismissable
+                onDismiss={() => setPdfGenError(null)}
+              >
+                {pdfGenError}. Showing unmodified template preview.
+              </Banner>
+            )}
+
+            {/* Document Action & Zoom Toolbar */}
+            <div
+              className="no-print"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '8px 14px',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#142b49' }}>
+                  Original PDF Preview
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: 'rgba(16,185,129,0.12)',
+                    color: '#10b981',
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                  }}
+                >
+                  {recordedDaysCount} {recordedDaysCount === 1 ? 'Record' : 'Records'} Populated
+                </span>
+              </div>
+
+              {/* Zoom & Action Controls */}
+              <HStack gap={2} align="center">
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    backgroundColor: '#f1f5f9',
+                    borderRadius: 8,
+                    padding: '3px 8px',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <button
+                    type="button"
+                    title="Zoom Out"
+                    onClick={() => setZoomPercent((prev) => Math.max(50, prev - 15))}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      fontSize: 14,
+                      color: '#475569',
+                      padding: '0 4px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    −
+                  </button>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#142b49',
+                      minWidth: 38,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {zoomPercent}%
+                  </span>
+                  <button
+                    type="button"
+                    title="Zoom In"
+                    onClick={() => setZoomPercent((prev) => Math.min(160, prev + 15))}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      fontSize: 14,
+                      color: '#475569',
+                      padding: '0 4px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    title="Reset to Fit Width"
+                    onClick={() => setZoomPercent(100)}
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: '#64748b',
+                      padding: '2px 6px',
+                      marginLeft: 4,
+                      border: '1px solid #cbd5e1',
+                    }}
+                  >
+                    Fit
+                  </button>
+                </div>
+
+                {populatedPdfUrl && (
+                  <Button
+                    label="Download Populated PDF"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleDownloadPdf}
+                  />
+                )}
+              </HStack>
+            </div>
+
+            {/* Clean Centered Document Canvas (pure light desk background, zero dark frame) */}
+            <div
+              className="no-print"
+              style={{
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 10,
+                padding: '24px 16px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                minHeight: 560,
+                maxHeight: 'calc(90dvh - 230px)',
+                overflowY: 'auto',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
+              {/* Paper Sheet Representation */}
+              <div
+                style={{
+                  width: `${(612 * zoomPercent) / 100}px`,
+                  maxWidth: '100%',
+                  aspectRatio: '612 / 936',
+                  height: `${(936 * zoomPercent) / 100}px`,
+                  backgroundColor: '#ffffff',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04)',
+                  border: '1px solid #e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  flexShrink: 0,
+                  transition: 'width 0.12s ease, height 0.12s ease',
+                }}
+              >
+                <iframe
+                  src={`${populatedPdfUrl || template.dataUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                  title="Populated Original Template PDF"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    display: 'block',
+                    backgroundColor: '#ffffff',
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Printable preview — Generated DTTR Document */}
-        {!showSettings && !showMapping && activeTab === 'report' && (
+        {/* Printable preview — Generated DTTR Document (Only for system templates) */}
+        {!showSettings && !showMapping && !isCustomTemplate && activeTab === 'report' && (
           <div
             id="dttr-printable-report"
             style={{
@@ -694,8 +975,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
               <tbody>
                 {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
                   const row = monthRows.find((r) => r.day === d);
-                  /* ─ preview + mapping state ─ */
-  return (
+                  return (
                     <tr key={d}>
                       <td style={{ border: '1px solid #000', padding: '2px 3px', textAlign: 'center', fontSize: '7.5pt', fontWeight: row?.hasRecord ? '600' : 'normal' }}>{d}</td>
                       <td style={{ border: '1px solid #000', padding: '2px 3px', textAlign: 'center', fontSize: '7.5pt', whiteSpace: 'nowrap' }}>{row?.amArrival || ''}</td>
@@ -762,8 +1042,7 @@ function CustomModalContent({ onOpenChange, currentUser, records, mode, template
   const userId = currentUser?.id || null;
 
   if (mode === 'upload') {
-    /* ─ preview + mapping state ─ */
-  return (
+    return (
       <UploadContent
         userId={userId}
         onSaved={onSaved}
@@ -774,7 +1053,6 @@ function CustomModalContent({ onOpenChange, currentUser, records, mode, template
   }
 
   // mode === 'generate'
-  /* ─ preview + mapping state ─ */
   return (
     <GenerateContent
       userId={userId}
@@ -798,7 +1076,6 @@ export function DttrCustomTemplateModal({
   onBack,
 }) {
   if (!isOpen) return null;
-  /* ─ preview + mapping state ─ */
   return (
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange} purpose="form" width={1020} maxHeight="95dvh">
       <CustomModalContent

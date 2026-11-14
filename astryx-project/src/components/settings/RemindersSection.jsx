@@ -24,16 +24,28 @@ export function RemindersSection() {
   const currentUser = getCurrentUser();
   const userId = currentUser?.id || 'guest';
 
+  const [prevUserId, setPrevUserId] = useState(userId);
   const [settings, setSettings] = useState(() => loadUserReminders(userId));
   const [permissionStatus, setPermissionStatus] = useState(getNotificationPermissionStatus);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  useEffect(() => {
+  // Synchronize when switching authenticated user
+  if (prevUserId !== userId) {
+    setPrevUserId(userId);
     setSettings(loadUserReminders(userId));
     setPermissionStatus(getNotificationPermissionStatus());
-  }, [userId]);
+  }
+
+  // Refresh permission state whenever user returns to the tab (e.g. from browser site settings)
+  useEffect(() => {
+    const handleFocus = () => {
+      setPermissionStatus(getNotificationPermissionStatus());
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handleToggleReminder = async (enabled) => {
     // If enabling and permission is not granted, request permission
