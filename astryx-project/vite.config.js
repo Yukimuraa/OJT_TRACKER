@@ -58,6 +58,7 @@ export default defineConfig({
       },
 
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         importScripts: ['sw-custom.js'],
         globPatterns: [
           '**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}',
