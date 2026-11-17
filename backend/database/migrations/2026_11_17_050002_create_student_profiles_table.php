@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('student_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->cascadeOnDelete();
-            $table->foreignId('school_id')->constrained('schools')->cascadeOnDelete();
+            $table->foreignId('school_id')->constrained('schools')->restrictOnDelete();
             $table->foreignId('company_id')->nullable()->constrained('companies')->nullOnDelete();
             $table->string('student_id');
             $table->unsignedInteger('required_hours')->default(600);

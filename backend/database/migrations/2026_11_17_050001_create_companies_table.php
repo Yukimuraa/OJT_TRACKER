@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->string('contact_email')->nullable();
             $table->string('contact_number', 30)->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

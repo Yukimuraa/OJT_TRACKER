@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,7 +15,7 @@ return new class extends Migration
         Schema::create('dttr_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->foreignId('school_id')->nullable()->constrained('schools')->nullOnDelete();
+            $table->foreignId('school_id')->nullable()->constrained('schools')->restrictOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('file_path', 500)->nullable();
@@ -25,6 +26,8 @@ return new class extends Migration
             $table->index('user_id');
             $table->index(['school_id', 'template_type']);
         });
+
+        DB::statement('ALTER TABLE dttr_templates ADD CONSTRAINT chk_dttr_template_ownership CHECK (user_id IS NULL OR school_id IS NULL)');
     }
 
     /**

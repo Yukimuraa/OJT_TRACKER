@@ -27,7 +27,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['user_id', 'training_date', 'deleted_at'], 'tr_user_date_del_unique');
+            $table->date('active_training_date')
+                ->nullable()
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN training_date ELSE NULL END');
+
+            $table->unique(['user_id', 'active_training_date'], 'tr_user_active_date_unique');
             $table->index(['user_id', 'training_date']);
             $table->index('client_updated_at');
         });
