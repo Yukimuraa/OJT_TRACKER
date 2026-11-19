@@ -37,7 +37,6 @@ function normalizePdfBytes(pdfData) {
       }
       return bytes;
     } catch {
-      // Not base64, might be a URL to fetch
       return null;
     }
   }
@@ -47,19 +46,25 @@ function normalizePdfBytes(pdfData) {
 /**
  * CleanPdfViewer
  *
- * Renders PDF pages directly to HTML5 <canvas> elements without using <iframe>.
- * Eliminates browser PDFium dark frames, black borders, nested scrollbars, and plugin UI.
+ * High-definition PDF canvas renderer.
+ * Features:
+ * - Supersampled canvas rendering to eliminate blurry text and pixelation.
+ * - Local standard fonts & cmaps to preserve exact character spacing and glyph widths.
+ * - Dedicated targetDpi support (e.g. 300 DPI for print and export).
+ * - Zero dark frames, nested scrollbars, or PDFium plugin UI.
  *
  * Props:
- *   pdfData           - Uint8Array | ArrayBuffer | string (data URL or blob URL)
- *   zoomPercent       - number (e.g. 100 for 100%)
- *   onLoadSuccess     - ({ numPages, width, height }) => void
- *   onError           - (Error) => void
- *   id                - string
+ *   pdfData       - Uint8Array | ArrayBuffer | string (data URL or blob URL)
+ *   zoomPercent   - number (default 100)
+ *   targetDpi     - number | null (e.g. 300 for print, null for high-DPI display)
+ *   onLoadSuccess - ({ numPages, width, height }) => void
+ *   onError       - (Error) => void
+ *   id            - string
  */
 export function CleanPdfViewer({
   pdfData,
   zoomPercent = 100,
+  targetDpi = null,
   onLoadSuccess,
   onError,
   id = 'clean-pdf-document',
@@ -83,12 +88,22 @@ export function CleanPdfViewer({
       setErrorMsg(null);
 
       try {
-        let docSource;
         const bytes = normalizePdfBytes(pdfData);
+        let docSource;
         if (bytes) {
-          docSource = { data: bytes };
+          docSource = {
+            data: bytes,
+            standardFontDataUrl: '/pdfjs/standard_fonts/',
+            cMapUrl: '/pdfjs/cmaps/',
+            cMapPacked: true,
+          };
         } else if (typeof pdfData === 'string') {
-          docSource = { url: pdfData };
+          docSource = {
+            url: pdfData,
+            standardFontDataUrl: '/pdfjs/standard_fonts/',
+            cMapUrl: '/pdfjs/cmaps/',
+            cMapPacked: true,
+          };
         } else {
           throw new Error('Unsupported PDF data format.');
         }
@@ -102,8 +117,19 @@ export function CleanPdfViewer({
         if (!container) return;
         container.innerHTML = '';
 
-        const outputScale = typeof window !== 'undefined' ? Math.max(1, window.devicePixelRatio || 1) : 1;
-        const scale = (zoomPercent / 100) * 1.35; // 1.35 provides crisp, readable scale matching long bond size
+        // Display scale matches Long Bond (8.5in x 13in) aspect ratio
+        const displayScale = (zoomPercent / 100) * 1.35;
+        const dpr = typeof window !== 'undefined' ? Math.max(1, window.devicePixelRatio || 1) : 1;
+
+        // Render scale controls internal canvas pixel resolution
+        let renderScale;
+        if (targetDpi && targetDpi > 0) {
+          // Standard PDF has 72 points per inch
+          renderScale = targetDpi / 72;
+        } else {
+          // High-DPI supersampling: render at least 2.4x for crystal clear on-screen readability
+          renderScale = Math.max(displayScale * dpr * 1.5, 2.4);
+        }
 
         let firstPageDims = { width: 612, height: 936 };
 
@@ -111,14 +137,14 @@ export function CleanPdfViewer({
           if (isCancelled) break;
 
           const page = await pdfDoc.getPage(pageNum);
-          const displayViewport = page.getViewport({ scale });
-          const renderViewport = page.getViewport({ scale: scale * outputScale });
+          const displayViewport = page.getViewport({ scale: displayScale });
+          const renderViewport = page.getViewport({ scale: renderScale });
 
           if (pageNum === 1) {
             firstPageDims = { width: displayViewport.width, height: displayViewport.height };
           }
 
-          // Page wrapper for printing and document styling
+          // Page wrapper
           const pageWrapper = document.createElement('div');
           pageWrapper.className = 'clean-pdf-page-wrapper';
           pageWrapper.style.backgroundColor = '#ffffff';
@@ -133,13 +159,13 @@ export function CleanPdfViewer({
           pageWrapper.style.overflow = 'hidden';
           pageWrapper.style.position = 'relative';
 
-          // Canvas element
+          // Canvas element with supersampled internal buffer
           const canvas = document.createElement('canvas');
           canvas.className = 'clean-pdf-canvas';
           canvas.width = Math.floor(renderViewport.width);
           canvas.height = Math.floor(renderViewport.height);
           canvas.style.width = '100%';
-          canvas.style.maxWidth = `${displayViewport.width}px`;
+          canvas.style.maxWidth = `${Math.floor(displayViewport.width)}px`;
           canvas.style.height = 'auto';
           canvas.style.display = 'block';
           canvas.style.backgroundColor = '#ffffff';
@@ -191,7 +217,7 @@ export function CleanPdfViewer({
         } catch {}
       }
     };
-  }, [pdfData, zoomPercent, onLoadSuccess, onError]);
+  }, [pdfData, zoomPercent, targetDpi, onLoadSuccess, onError]);
 
   return (
     <div
@@ -247,6 +273,182 @@ export function CleanPdfViewer({
           alignItems: 'center',
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * PdfThumbnail
+ *
+ * Renders page 1 of a PDF as a clean, crisp canvas thumbnail.
+ * Eliminates browser iframe dark frames, black borders, and scrollbars.
+ *
+ * Props:
+ *   pdfData - Uint8Array | ArrayBuffer | string (data URL or blob URL)
+ *   height  - number (default 120)
+ *   style   - object
+ */
+export function PdfThumbnail({
+  pdfData,
+  height = 120,
+  style = {},
+}) {
+  const canvasRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    let loadingTask = null;
+
+    async function renderThumbnail() {
+      if (!pdfData) return;
+      try {
+        const bytes = normalizePdfBytes(pdfData);
+        let docSource;
+        if (bytes) {
+          docSource = {
+            data: bytes,
+            standardFontDataUrl: '/pdfjs/standard_fonts/',
+            cMapUrl: '/pdfjs/cmaps/',
+            cMapPacked: true,
+          };
+        } else if (typeof pdfData === 'string') {
+          docSource = {
+            url: pdfData,
+            standardFontDataUrl: '/pdfjs/standard_fonts/',
+            cMapUrl: '/pdfjs/cmaps/',
+            cMapPacked: true,
+          };
+        } else {
+          setError(true);
+          return;
+        }
+
+        loadingTask = pdfjsLib.getDocument(docSource);
+        const pdfDoc = await loadingTask.promise;
+        if (isCancelled) return;
+
+        const page = await pdfDoc.getPage(1);
+        if (isCancelled) return;
+
+        const dpr = typeof window !== 'undefined' ? Math.max(1, window.devicePixelRatio || 1) : 1;
+        // Scale 0.70 * dpr produces ~430-860px width, crisp on retina & standard monitors
+        const scale = 0.70 * dpr;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({
+          canvasContext: ctx,
+          viewport,
+        }).promise;
+
+        if (!isCancelled) {
+          setLoaded(true);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error('[PdfThumbnail] Render failed:', err);
+          setError(true);
+        }
+      }
+    }
+
+    renderThumbnail();
+
+    return () => {
+      isCancelled = true;
+      if (loadingTask) {
+        try {
+          loadingTask.destroy();
+        } catch {}
+      }
+    };
+  }, [pdfData]);
+
+  if (error) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height,
+          backgroundColor: '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          ...style,
+        }}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>PDF Template</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="pdf-thumbnail-wrapper"
+      style={{
+        width: '100%',
+        height,
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: '#ffffff',
+        border: 'none',
+        outline: 'none',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        scrollbarWidth: 'none',   /* Firefox */
+        msOverflowStyle: 'none',  /* IE/Edge */
+        ...style,
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: '100%',
+          height: 'auto',
+          display: 'block',
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.18s ease',
+          flexShrink: 0,
+        }}
+      />
+      {!loaded && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: '#f8fafc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }

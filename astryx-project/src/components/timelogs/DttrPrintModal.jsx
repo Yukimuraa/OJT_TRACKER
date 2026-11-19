@@ -199,19 +199,21 @@ function DttrDocument({ id = 'dttr-document-root', headerInfo, monthRows, totalH
               fontSize: '8.5pt',
               paddingBottom: 1,
               minHeight: 14,
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere',
+              whiteSpace: 'normal',
             }}
           >
-            {headerInfo.agencyName
-              ? `${headerInfo.agencyName}${headerInfo.department ? ' / ' + headerInfo.department : ''}`
-              : ''}
+            {[headerInfo.agencyName, headerInfo.department].filter(Boolean).join('  /  ')}
           </div>
           <div
             style={{
               fontSize: '6.5pt',
               fontWeight: 'bold',
-              letterSpacing: '0.04em',
+              letterSpacing: '0.02em',
               marginTop: 1,
               textAlign: 'center',
+              whiteSpace: 'nowrap',
             }}
           >
             INDUSTRY / AGENCY NAME / DEPARTMENT

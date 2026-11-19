@@ -30,6 +30,7 @@ import {
   SYSTEM_TEMPLATE,
 } from '../../services/dttrTemplateService';
 import { PrinterIcon } from '../common/BrandIcons';
+import { PdfThumbnail } from '../common/CleanPdfViewer';
 
 /* ── Small SVG icons ─────────────────────────────────────────────────────── */
 function UploadIcon({ size = 20, color = 'currentColor' }) {
@@ -342,33 +343,26 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
               selected={selectedId === tmpl.id}
               onClick={() => { if (deletingId !== tmpl.id && renamingId !== tmpl.id) setSelectedId(tmpl.id); }}
             >
-              {/* PDF preview thumbnail */}
+              {/* PDF preview thumbnail — clean canvas, zero iframe, zero black border, zero scrollbar */}
               <div
+                className="pdf-thumbnail-wrapper"
                 style={{
                   width: '100%',
                   height: 120,
                   borderRadius: 8,
                   overflow: 'hidden',
                   border: '1px solid #e2e8f0',
-                  backgroundColor: '#f1f5f9',
+                  backgroundColor: '#ffffff',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   justifyContent: 'center',
                   position: 'relative',
+                  pointerEvents: 'none',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
                 }}
               >
-                <iframe
-                  src={`${tmpl.dataUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                  title={`Preview of ${tmpl.name}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    pointerEvents: 'none',
-                    transform: 'scale(1)',
-                    transformOrigin: 'top left',
-                  }}
-                />
+                <PdfThumbnail pdfData={tmpl.dataUrl} height={120} />
               </div>
 
               {/* Name row + action buttons */}

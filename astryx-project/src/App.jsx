@@ -17,6 +17,8 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { OnboardingWizard } from './pages/onboarding/OnboardingWizard';
 import { isAuthenticated, getCurrentUser } from './services/authService';
 import { restartReminderScheduler } from './services/reminderService';
+import { fetchStudentProfile } from './services/profileService';
+import { isOnboardingCompleted } from './services/onboardingService';
 import { PwaStatusBanners } from './components/pwa/PwaStatusBanners';
 
 const PAGE_TITLES = {
@@ -40,7 +42,9 @@ function getInitialPage() {
       return 'login';
     }
 
-    if (path === '/onboarding') return 'onboarding';
+    if (path === '/onboarding') {
+      return isOnboardingCompleted() ? 'dashboard' : 'onboarding';
+    }
     if (path === '/app/timelogs' || path === '/timelogs') return 'timelogs';
     if (path === '/app/reports' || path === '/reports') return 'reports';
     if (path === '/app/profile' || path === '/profile') return 'profile';
@@ -71,6 +75,20 @@ export function App() {
       }
     }
   }, [activePage]);
+
+  // Restore student profile & onboarding state from backend on mount
+  useEffect(() => {
+    if (isAuthenticated()) {
+      fetchStudentProfile().then((profile) => {
+        if (profile?.onboardingCompleted && window.location.pathname.toLowerCase() === '/onboarding') {
+          setActivePage('dashboard');
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
+          }
+        }
+      }).catch(() => {});
+    }
+  }, []);
 
   const navigateTo = (page) => {
     // Route guard: Prevent unauthenticated users from accessing protected pages

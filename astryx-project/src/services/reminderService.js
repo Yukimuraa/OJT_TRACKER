@@ -12,6 +12,7 @@
  */
 
 import { getCurrentUser } from './authService';
+import apiClient from './apiClient';
 
 const REMINDER_STORAGE_PREFIX = 'ojt_reminders_';
 let activeSchedulerInterval = null;
@@ -293,30 +294,17 @@ export function restartReminderScheduler(userId) {
 }
 
 /**
- * Connects to Laravel /api/reminders endpoint when backend is active.
+ * Connects to Laravel /api/reminders endpoint using Sanctum cookie authentication.
  */
 export async function syncReminderSettingsWithServer(userId, settings) {
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('ojt_auth_token') : null;
-  if (!token) return { offline: true };
-
   try {
-    const response = await fetch('/api/reminders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        reminders_enabled: settings.remindersEnabled,
-        reminder_time: settings.reminderTime,
-        timezone: settings.timezone,
-      }),
+    const data = await apiClient.post('/api/reminders', {
+      title: 'Daily Attendance Reminder',
+      description: `Daily OJT reminder scheduled for ${settings.reminderTime} (${settings.timezone})`,
+      remind_at: `${new Date().toISOString().slice(0, 10)} ${settings.reminderTime}:00`,
+      is_completed: false,
     });
-    if (!response.ok) {
-      return { offline: true, status: response.status };
-    }
-    return await response.json();
+    return { success: true, data };
   } catch (err) {
     return { offline: true, error: err.message };
   }

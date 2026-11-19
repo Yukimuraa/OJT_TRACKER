@@ -12,6 +12,7 @@ import { Divider } from '@astryxdesign/core/Divider';
 import { Banner } from '@astryxdesign/core/Banner';
 import { GraduationCapIcon } from '../../components/common/BrandIcons';
 import { isOnboardingCompleted } from '../../services/onboardingService';
+import { fetchStudentProfile } from '../../services/profileService';
 import { loginUser } from '../../services/authService';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -59,8 +60,28 @@ export function LoginPage({ onNavigate }) {
         return;
       }
 
-      // Successful verified login
-      const destination = isOnboardingCompleted() ? 'dashboard' : 'onboarding';
+      // Successful verified login:
+      // Retrieve backend profile before routing to ensure onboarding and requirements are restored on any device
+      let isCompleted = Boolean(
+        result.user?.onboardingCompleted ||
+        result.user?.studentProfile?.onboarding_completed
+      );
+
+      try {
+        const remoteProfile = await fetchStudentProfile();
+        if (remoteProfile?.onboardingCompleted) {
+          isCompleted = true;
+        } else if (!isCompleted) {
+          isCompleted = isOnboardingCompleted(result.user?.id);
+        }
+      } catch (err) {
+        console.warn('Backend profile fetch failed after login, falling back to local state:', err);
+        if (!isCompleted) {
+          isCompleted = isOnboardingCompleted(result.user?.id);
+        }
+      }
+
+      const destination = isCompleted ? 'dashboard' : 'onboarding';
       onNavigate?.(destination);
     } catch {
       setIsSubmitting(false);

@@ -1,20 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@astryxdesign/core/Button';
-import { GraduationCapIcon, MenuIcon, CloseIcon } from '../../components/common/BrandIcons';
+import {
+  GraduationCapIcon,
+  HomeIcon,
+  SparklesIcon,
+  DeviceMobileIcon,
+  ClipboardCheckIcon,
+} from '../../components/common/BrandIcons';
 
 const NAV_LINKS = [
-  { label: 'Home', href: '#home' },
-  { label: 'Features', href: '#features' },
-  { label: 'Preview', href: '#product-preview' },
-  { label: 'How It Works', href: '#how-it-works' },
+  { id: 'home', label: 'Home', href: '#home', Icon: HomeIcon },
+  { id: 'features', label: 'Features', href: '#features', Icon: SparklesIcon },
+  { id: 'product-preview', label: 'Preview', href: '#product-preview', Icon: DeviceMobileIcon },
+  { id: 'how-it-works', label: 'How It Works', href: '#how-it-works', Icon: ClipboardCheckIcon },
 ];
 
 export function LandingNav({ onRegister, onLogin }) {
   const [activeSection, setActiveSection] = useState('home');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const menuRef = useRef(null);
 
   // Active section spy and scroll progress tracking
   useEffect(() => {
@@ -25,18 +29,28 @@ export function LandingNav({ onRegister, onLogin }) {
       setScrollProgress(progress);
       setIsScrolled(currentScroll > 15);
 
-      const sections = ['home', 'features', 'product-preview', 'how-it-works'];
-      let current = 'home';
+      if (currentScroll < 80) {
+        setActiveSection('home');
+        return;
+      }
+
+      // Check if near page bottom, activate the last section
+      if (window.innerHeight + currentScroll >= document.documentElement.scrollHeight - 60) {
+        setActiveSection('how-it-works');
+        return;
+      }
+
+      const sections = ['home', 'product-preview', 'features', 'how-it-works'];
       for (const id of sections) {
         const el = document.getElementById(id);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 140 && rect.bottom >= 140) {
-            current = id;
+          if (rect.top <= 160 && rect.bottom >= 100) {
+            setActiveSection(id);
+            break;
           }
         }
       }
-      setActiveSection(current);
     };
 
     handleScroll();
@@ -44,35 +58,22 @@ export function LandingNav({ onRegister, onLogin }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Lock background scrolling when mobile menu is active
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isMobileMenuOpen]);
-
-  // Handle ESC key to dismiss mobile menu
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isMobileMenuOpen) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobileMenuOpen]);
-
   const handleNavClick = (href) => (e) => {
     e.preventDefault();
-    setIsMobileMenuOpen(false);
     const id = href.replace('#', '');
+    setActiveSection(id);
+
+    if (id === 'home') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+      return;
+    }
+
     const element = document.getElementById(id);
     if (element) {
-      const topOffset = 80;
+      const topOffset = 76;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - topOffset;
       window.scrollTo({
@@ -167,7 +168,7 @@ export function LandingNav({ onRegister, onLogin }) {
               </div>
             </a>
 
-            {/* Desktop Navigation Links (centered) */}
+            {/* Desktop Navigation Links (centered, brand emerald on hover and active, never black) */}
             <nav
               className="ojt-desktop-only"
               style={{
@@ -176,22 +177,14 @@ export function LandingNav({ onRegister, onLogin }) {
                 gap: 32,
               }}
             >
-              {NAV_LINKS.map(({ label, href }) => {
-                const isSelected = activeSection === href.replace('#', '');
+              {NAV_LINKS.map(({ label, href, id }) => {
+                const isSelected = activeSection === id;
                 return (
                   <a
-                    key={label}
+                    key={id}
                     href={href}
                     onClick={handleNavClick(href)}
-                    style={{
-                      fontSize: '0.925rem',
-                      fontWeight: isSelected ? 700 : 500,
-                      color: isSelected ? '#10b981' : '#64748b',
-                      textDecoration: 'none',
-                      transition: 'color 0.15s ease',
-                      position: 'relative',
-                      padding: '8px 0',
-                    }}
+                    className={`ojt-landing-nav-link ${isSelected ? 'active' : ''}`}
                   >
                     {label}
                     {isSelected && (
@@ -235,175 +228,46 @@ export function LandingNav({ onRegister, onLogin }) {
               />
             </div>
 
-            {/* Mobile Hamburger Button */}
-            <button
-              type="button"
+            {/* Mobile Top Header Actions (Direct authentication buttons replacing hamburger menu) */}
+            <div
               className="ojt-mobile-only"
-              aria-label={isMobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
-              aria-expanded={isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 10,
-                border: '1px solid #e2e8f0',
-                backgroundColor: isMobileMenuOpen ? '#f1f5f9' : '#ffffff',
-                color: '#142b49',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.15s, border-color 0.15s',
+                gap: 8,
               }}
             >
-              {isMobileMenuOpen ? (
-                <CloseIcon style={{ width: 22, height: 22 }} />
-              ) : (
-                <MenuIcon style={{ width: 22, height: 22 }} />
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Drawer Panel & Backdrop */}
-      {isMobileMenuOpen && (
-        <div
-          className="ojt-mobile-only"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            top: 72,
-            zIndex: 49,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Backdrop Blur */}
-          <div
-            onClick={() => setIsMobileMenuOpen(false)}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'rgba(20, 43, 73, 0.4)',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-            }}
-          />
-
-          {/* Drawer Menu Body */}
-          <div
-            ref={menuRef}
-            style={{
-              position: 'relative',
-              backgroundColor: '#ffffff',
-              borderBottom: '1px solid #e2e8f0',
-              boxShadow: '0 20px 30px -10px rgba(20, 43, 73, 0.15)',
-              padding: '24px 20px 32px 20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              maxHeight: 'calc(100vh - 80px)',
-              overflowY: 'auto',
-              animation: 'ojtSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-          >
-            {/* Navigation links */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {NAV_LINKS.map(({ label, href }) => {
-                const isSelected = activeSection === href.replace('#', '');
-                return (
-                  <a
-                    key={label}
-                    href={href}
-                    onClick={handleNavClick(href)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '14px 16px',
-                      borderRadius: 12,
-                      textDecoration: 'none',
-                      fontSize: '1rem',
-                      fontWeight: isSelected ? 700 : 600,
-                      color: isSelected ? '#10b981' : '#142b49',
-                      backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
-                      minHeight: 48,
-                      transition: 'background-color 0.15s',
-                    }}
-                  >
-                    <span>{label}</span>
-                    {isSelected && (
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          backgroundColor: '#10b981',
-                        }}
-                      />
-                    )}
-                  </a>
-                );
-              })}
-            </div>
-
-            <div style={{ height: 1, backgroundColor: '#e2e8f0', margin: '4px 0' }} />
-
-            {/* Mobile Auth Buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onLogin?.();
-                }}
+                onClick={onLogin}
                 style={{
-                  width: '100%',
-                  minHeight: 48,
-                  borderRadius: 12,
-                  border: '1.5px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
+                  padding: '7px 12px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
                   color: '#142b49',
-                  fontSize: '1rem',
-                  fontWeight: 700,
+                  backgroundColor: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: 8,
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background-color 0.15s',
+                  minHeight: 38,
                 }}
               >
                 Login
               </button>
-
               <button
                 type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onRegister?.();
-                }}
+                onClick={onRegister}
                 style={{
-                  width: '100%',
-                  minHeight: 48,
-                  borderRadius: 12,
-                  border: 'none',
-                  backgroundColor: '#000000',
-                  color: '#ffffff',
-                  fontSize: '1rem',
+                  padding: '7px 14px',
+                  fontSize: '0.875rem',
                   fontWeight: 700,
+                  color: '#ffffff',
+                  backgroundColor: '#10b981',
+                  border: 'none',
+                  borderRadius: 8,
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
-                  transition: 'background-color 0.15s ease, transform 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1f2937';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#000000';
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  minHeight: 38,
                 }}
               >
                 Get Started
@@ -411,7 +275,60 @@ export function LandingNav({ onRegister, onLogin }) {
             </div>
           </div>
         </div>
-      )}
+      </header>
+
+      {/* Fixed Mobile Bottom Navigation Bar (replaces hamburger menu on mobile screen sizes) */}
+      <nav
+        className="ojt-landing-mobile-bottom-nav ojt-mobile-only"
+        aria-label="Mobile Landing Navigation"
+      >
+        {NAV_LINKS.map(({ label, href, id, Icon }) => {
+          const isSelected = activeSection === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={handleNavClick(href)}
+              aria-label={label}
+              aria-current={isSelected ? 'page' : undefined}
+              className={`ojt-landing-bottom-nav-item ${isSelected ? 'active' : ''}`}
+            >
+              {/* Active top accent indicator */}
+              {isSelected && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-6px',
+                    width: '28px',
+                    height: '3px',
+                    backgroundColor: '#10b981',
+                    borderRadius: '0 0 3px 3px',
+                  }}
+                />
+              )}
+              <Icon
+                style={{
+                  width: 20,
+                  height: 20,
+                  color: isSelected ? '#10b981' : '#64748b',
+                  marginBottom: 2,
+                  transition: 'color 0.15s ease',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: isSelected ? 700 : 500,
+                  color: isSelected ? '#10b981' : '#64748b',
+                  transition: 'color 0.15s ease',
+                }}
+              >
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
     </>
   );
 }

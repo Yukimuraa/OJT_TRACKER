@@ -34,6 +34,7 @@
  */
 
 import { getCurrentUser } from './authService.js';
+import apiClient from './apiClient.js';
 
 function getTemplatesKey(userId = null) {
   const uid = userId || getCurrentUser()?.id || 'guest';
@@ -157,4 +158,47 @@ export const SYSTEM_TEMPLATE = {
 
 // Backward compatibility alias
 export const OFFICIAL_TEMPLATE = COMPUTER_STUDIES_TEMPLATE;
+
+/**
+ * Fetches all templates visible to the user from the Laravel backend (/api/dttr-templates).
+ */
+export async function fetchRemoteTemplates() {
+  try {
+    const data = await apiClient.get('/api/dttr-templates');
+    return data?.templates || [];
+  } catch (err) {
+    console.warn('Failed to fetch DTTR templates from backend', err);
+    return [];
+  }
+}
+
+/**
+ * Creates a new custom template on the Laravel backend.
+ */
+export async function createRemoteTemplate({ name, description = '', filePath, templateType = 'pdf' }) {
+  try {
+    const data = await apiClient.post('/api/dttr-templates', {
+      name,
+      description,
+      file_path: filePath,
+      template_type: templateType,
+    });
+    return { success: true, template: data?.template };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Deletes a custom template on the Laravel backend.
+ */
+export async function deleteRemoteTemplate(templateId) {
+  try {
+    await apiClient.delete(`/api/dttr-templates/${templateId}`);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 

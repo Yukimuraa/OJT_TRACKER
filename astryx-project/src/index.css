@@ -261,6 +261,36 @@ main,
   }
 }
 
+/* PDF Thumbnail — hide all scrollbars, borders, and shadows inside the canvas preview */
+.pdf-thumbnail-wrapper {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.pdf-thumbnail-wrapper::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.pdf-thumbnail-wrapper canvas {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: block !important;
+  scrollbar-width: none !important;
+}
+
+.pdf-thumbnail-wrapper canvas::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* iOS-Style Wheel Picker Styles */
 .ios-wheel-column {
   scrollbar-width: none;
@@ -499,3 +529,119 @@ main,
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   Landing Page Navigation & Mobile Bottom Bar
+   Fixed 4-item bottom bar on mobile + Brand Emerald hover & active color styling
+   ========================================================================== */
+
+/* Prevent landing links from inheriting black hover from theme tint */
+.ojt-landing-nav-link {
+  font-size: 0.925rem;
+  font-weight: 500;
+  color: #64748b !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease;
+  position: relative;
+  padding: 8px 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ojt-landing-nav-link:hover {
+  color: #10b981 !important;
+  text-decoration: none !important;
+}
+
+.ojt-landing-nav-link.active {
+  color: #10b981 !important;
+  font-weight: 700;
+}
+
+/* Landing Mobile Bottom Navigation */
+.ojt-landing-mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 16px rgba(20, 43, 73, 0.06);
+  z-index: 900;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  padding-top: 6px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+.ojt-landing-bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  min-height: 48px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  color: #64748b;
+  position: relative;
+  transition: color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.ojt-landing-bottom-nav-item:hover {
+  color: #10b981 !important;
+}
+
+.ojt-landing-bottom-nav-item.active {
+  color: #10b981 !important;
+  font-weight: 700;
+}
+
+@media (min-width: 769px) {
+  .ojt-landing-mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .ojt-landing-mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  /* Safe bottom padding for landing page content on mobile so bottom nav does not obscure sections or footer */
+  .ojt-landing-root {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (hover: none) {
+  .ojt-landing-nav-link:hover {
+    color: inherit;
+  }
+  .ojt-landing-bottom-nav-item:hover {
+    color: inherit;
+  }
+  .ojt-landing-bottom-nav-item.active {
+    color: #10b981 !important;
+  }
+}
+
+@keyframes ojtSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from '../components/layout/PageLayout';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -14,20 +14,31 @@ import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { TextInput } from '@astryxdesign/core/TextInput';
 import { DateInput } from '@astryxdesign/core/DateInput';
 import { TextArea } from '@astryxdesign/core/TextArea';
+import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
 import { StackItem } from '@astryxdesign/core/Stack';
+import { Banner } from '@astryxdesign/core/Banner';
 import {
   loadStoredProfile,
   saveStoredProfile,
+  fetchStudentProfile,
+  updateStudentProfile,
 } from '../services/profileService';
 import { useTraining } from '../hooks/useTraining';
-import { loadOnboardingData } from '../services/onboardingService';
+import { loadOnboardingData, saveOnboardingData } from '../services/onboardingService';
 
 function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
-  const [formData, setFormData] = useState(profile);
+  const [formData, setFormData] = useState(profile || {});
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFormData(profile);
+    }
+  }, [profile, isOpen]);
 
   const handleClose = (open) => {
     if (!open) {
-      setFormData(profile);
+      setFormData(profile || {});
     }
     onOpenChange(open);
   };
@@ -42,9 +53,14 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    onSave(formData);
-    onOpenChange(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(formData);
+      onOpenChange(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -76,7 +92,7 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
             border: '1px solid #e2e8f0',
           }}
         >
-          <UserAvatar src={formData.avatarUrl} alt={formData.fullName} size={64} />
+          <UserAvatar src={formData.avatarUrl} alt={formData.fullName || 'Student'} size={64} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#142b49' }}>
               Profile Avatar
@@ -110,72 +126,119 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
         <TextInput
           label="Full Name"
           isRequired
-          value={formData.fullName}
+          value={formData.fullName || ''}
           onChange={(val) => setFormData((p) => ({ ...p, fullName: val }))}
           width="100%"
         />
         <TextInput
           label="Student ID Number"
           isRequired
-          value={formData.studentId}
+          value={formData.studentId || ''}
           onChange={(val) => setFormData((p) => ({ ...p, studentId: val }))}
           width="100%"
         />
         <TextInput
           label="Degree / Academic Program"
           isRequired
-          value={formData.program}
+          value={formData.program || ''}
           onChange={(val) => setFormData((p) => ({ ...p, program: val }))}
           width="100%"
         />
         <TextInput
           label="Educational Institution"
           isRequired
-          value={formData.institution}
+          value={formData.institution || ''}
           onChange={(val) => setFormData((p) => ({ ...p, institution: val }))}
           width="100%"
         />
         <TextInput
           label="Host Training Establishment (Company)"
           isRequired
-          value={formData.company}
+          value={formData.company || ''}
           onChange={(val) => setFormData((p) => ({ ...p, company: val }))}
           width="100%"
         />
         <TextInput
           label="Assigned Department"
-          value={formData.department}
+          value={formData.department || ''}
           onChange={(val) => setFormData((p) => ({ ...p, department: val }))}
           width="100%"
         />
         <TextInput
           label="Industry Supervisor / Mentor"
-          value={formData.supervisor}
+          value={formData.supervisor || ''}
           onChange={(val) => setFormData((p) => ({ ...p, supervisor: val }))}
           width="100%"
         />
         <TextInput
           label="Supervisor Contact Email"
           type="email"
-          value={formData.supervisorEmail}
+          value={formData.supervisorEmail || ''}
           onChange={(val) => setFormData((p) => ({ ...p, supervisorEmail: val }))}
           width="100%"
         />
         <DateInput
           label="Training Start Date"
-          value={formData.startDate}
+          value={formData.startDate || ''}
           onChange={(val) => setFormData((p) => ({ ...p, startDate: val || '' }))}
           width="100%"
         />
         <DateInput
           label="Target Completion Date"
-          value={formData.targetEndDate}
+          value={formData.targetEndDate || ''}
           onChange={(val) => setFormData((p) => ({ ...p, targetEndDate: val || '' }))}
           width="100%"
         />
+
+        <Divider variant="subtle" />
+        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#142b49' }}>
+          Daily Training Schedule
+        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <CheckboxInput
+            label="Morning Shift Enabled"
+            value={formData.morningEnabled ?? true}
+            onChange={(checked) => setFormData((p) => ({ ...p, morningEnabled: checked }))}
+          />
+          {formData.morningEnabled !== false && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <TextInput
+                label="Morning Start (HH:MM)"
+                value={formData.morningStart || '08:00'}
+                onChange={(val) => setFormData((p) => ({ ...p, morningStart: val }))}
+              />
+              <TextInput
+                label="Morning End (HH:MM)"
+                value={formData.morningEnd || '12:00'}
+                onChange={(val) => setFormData((p) => ({ ...p, morningEnd: val }))}
+              />
+            </div>
+          )}
+          <CheckboxInput
+            label="Afternoon Shift Enabled"
+            value={formData.afternoonEnabled ?? true}
+            onChange={(checked) => setFormData((p) => ({ ...p, afternoonEnabled: checked }))}
+          />
+          {formData.afternoonEnabled !== false && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <TextInput
+                label="Afternoon Start (HH:MM)"
+                value={formData.afternoonStart || '13:00'}
+                onChange={(val) => setFormData((p) => ({ ...p, afternoonStart: val }))}
+              />
+              <TextInput
+                label="Afternoon End (HH:MM)"
+                value={formData.afternoonEnd || '17:00'}
+                onChange={(val) => setFormData((p) => ({ ...p, afternoonEnd: val }))}
+              />
+            </div>
+          )}
+        </div>
+        <Divider variant="subtle" />
+
         <TextArea
           label="Notes / Special Instructions"
-          value={formData.notes}
+          value={formData.notes || ''}
           onChange={(val) => setFormData((p) => ({ ...p, notes: val }))}
           rows={3}
           width="100%"
@@ -185,11 +248,13 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
             label="Cancel"
             variant="secondary"
             onClick={() => handleClose(false)}
+            disabled={isSaving}
           />
           <Button
-            label="Save Changes"
+            label={isSaving ? 'Saving...' : 'Save Changes'}
             variant="primary"
             onClick={handleSave}
+            disabled={isSaving}
           />
         </HStack>
       </VStack>
@@ -201,11 +266,53 @@ export function Profile() {
   const [profile, setProfile] = useState(() => loadStoredProfile());
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { requiredHours } = useTraining();
-  const onboarding = loadOnboardingData();
+  const [onboarding, setOnboarding] = useState(() => loadOnboardingData());
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const handleSaveProfile = (updated) => {
+  const loadProfile = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const p = await fetchStudentProfile();
+      if (p) {
+        setProfile(p);
+        setOnboarding(loadOnboardingData());
+      }
+    } catch (err) {
+      console.warn('Could not load profile from backend:', err);
+      setError('Unable to reach the server to fetch live profile data. Displaying cached information.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  const handleSaveProfile = async (updated) => {
     setProfile(updated);
     saveStoredProfile(updated);
+    try {
+      await updateStudentProfile(updated);
+      const updatedOnboarding = {
+        ...loadOnboardingData(),
+        morningEnabled: updated.morningEnabled !== false,
+        morningTimeIn: updated.morningStart || '08:00',
+        morningTimeOut: updated.morningEnd || '12:00',
+        afternoonEnabled: updated.afternoonEnabled !== false,
+        afternoonTimeIn: updated.afternoonStart || '13:00',
+        afternoonTimeOut: updated.afternoonEnd || '17:00',
+      };
+      saveOnboardingData(updatedOnboarding);
+      setOnboarding(updatedOnboarding);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
+    } catch (err) {
+      console.error('Failed to update student profile:', err);
+    }
   };
 
   return (
@@ -213,26 +320,69 @@ export function Profile() {
       title="Student Profile"
       description="Manage your student intern information, academic background, and training placement details."
       actions={
-        <Button
-          label="Edit Profile"
-          variant="primary"
-          onClick={() => setIsEditDialogOpen(true)}
-        />
+        <HStack gap={2}>
+          <Button
+            label="Refresh"
+            variant="ghost"
+            onClick={loadProfile}
+            disabled={isLoading}
+          />
+          <Button
+            label="Edit Profile"
+            variant="primary"
+            onClick={() => setIsEditDialogOpen(true)}
+          />
+        </HStack>
       }
     >
       <VStack gap={6}>
+        {/* Status feedback banners */}
+        {saveSuccess && (
+          <Banner
+            status="success"
+            title="Profile updated successfully."
+          />
+        )}
+        {error && (
+          <Banner
+            status="warning"
+            title={error}
+          />
+        )}
+
+        {/* Loading Spinner State if initial loading and no data */}
+        {isLoading && !profile?.fullName && (
+          <Card elevation="low" padding={6}>
+            <VStack gap={3} align="center" justify="center" style={{ minHeight: 200 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  border: '3px solid #e2e8f0',
+                  borderTopColor: '#10b981',
+                  borderRadius: '50%',
+                  animation: 'ojtSpin 0.8s linear infinite',
+                }}
+              />
+              <Text weight="semibold" color="secondary">
+                Loading student profile...
+              </Text>
+            </VStack>
+          </Card>
+        )}
+
         {/* Profile Header Hero Card */}
         <Card elevation="low" padding={5}>
           <HStack gap={5} align="center" wrap="wrap">
             <UserAvatar
-              src={profile.avatarUrl}
-              alt={profile.fullName}
+              src={profile?.avatarUrl}
+              alt={profile?.fullName || 'Student Intern'}
               size={76}
             />
             <StackItem size="fill">
               <VStack gap={1}>
                 <HStack gap={3} align="center" wrap="wrap">
-                  <Heading level={2}>{profile.fullName}</Heading>
+                  <Heading level={2}>{profile?.fullName || 'Student Intern'}</Heading>
                   <HStack gap={1} align="center">
                     <StatusDot variant="success" label="Active Trainee" />
                     <Text size="sm" color="accent" weight="semibold">
@@ -241,10 +391,10 @@ export function Profile() {
                   </HStack>
                 </HStack>
                 <Text type="body" color="secondary">
-                  {profile.program} · {profile.studentId}
+                  {profile?.program || '—'} · {profile?.studentId || '—'}
                 </Text>
                 <Text size="sm" color="secondary">
-                  {profile.institution}
+                  {profile?.institution || '—'}
                 </Text>
               </VStack>
             </StackItem>
@@ -261,19 +411,21 @@ export function Profile() {
               <VStack gap={3}>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Institution / College</Text>
-                  <Text weight="medium">{profile.institution || '—'}</Text>
+                  <Text weight="medium">{profile?.institution || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Degree Program</Text>
-                  <Text weight="medium">{profile.program || '—'}</Text>
+                  <Text weight="medium">{profile?.program || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Student ID Number</Text>
-                  <Text weight="medium" hasTabularNumbers>{profile.studentId || '—'}</Text>
+                  <Text weight="medium" hasTabularNumbers>{profile?.studentId || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Required OJT Hours Target</Text>
-                  <Text weight="semibold" color="accent">{requiredHours} Hours</Text>
+                  <Text weight="semibold" color="accent">
+                    {profile?.requiredHours || requiredHours || 600} Hours
+                  </Text>
                 </VStack>
               </VStack>
             </VStack>
@@ -287,36 +439,40 @@ export function Profile() {
               <VStack gap={3}>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Host Company</Text>
-                  <Text weight="medium">{profile.company || '—'}</Text>
+                  <Text weight="medium">{profile?.company || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Assigned Department</Text>
-                  <Text weight="medium">{profile.department || '—'}</Text>
+                  <Text weight="medium">{profile?.department || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Designated Supervisor</Text>
-                  <Text weight="medium">{profile.supervisor || '—'}</Text>
+                  <Text weight="medium">{profile?.supervisor || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Supervisor Email</Text>
-                  <Text weight="medium">{profile.supervisorEmail || '—'}</Text>
+                  <Text weight="medium">{profile?.supervisorEmail || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Regular Daily Schedule</Text>
                   <Text weight="medium">
-                    {onboarding.morningEnabled ? `AM: ${onboarding.morningTimeIn}–${onboarding.morningTimeOut}` : 'AM: Off'}
+                    {profile?.morningEnabled !== false
+                      ? `AM: ${profile?.morningStart || onboarding?.morningTimeIn || '08:00'}–${profile?.morningEnd || onboarding?.morningTimeOut || '12:00'}`
+                      : 'AM: Off'}
                     {' · '}
-                    {onboarding.afternoonEnabled ? `PM: ${onboarding.afternoonTimeIn}–${onboarding.afternoonTimeOut}` : 'PM: Off'}
+                    {profile?.afternoonEnabled !== false
+                      ? `PM: ${profile?.afternoonStart || onboarding?.afternoonTimeIn || '13:00'}–${profile?.afternoonEnd || onboarding?.afternoonTimeOut || '17:00'}`
+                      : 'PM: Off'}
                   </Text>
                 </VStack>
                 <HStack gap={4} wrap="wrap">
                   <VStack gap={0.5}>
                     <Text size="sm" color="secondary">Start Date</Text>
-                    <Text weight="medium" hasTabularNumbers>{profile.startDate || '—'}</Text>
+                    <Text weight="medium" hasTabularNumbers>{profile?.startDate || '—'}</Text>
                   </VStack>
                   <VStack gap={0.5}>
                     <Text size="sm" color="secondary">Target End Date</Text>
-                    <Text weight="medium" hasTabularNumbers>{profile.targetEndDate || '—'}</Text>
+                    <Text weight="medium" hasTabularNumbers>{profile?.targetEndDate || '—'}</Text>
                   </VStack>
                 </HStack>
               </VStack>
@@ -325,7 +481,7 @@ export function Profile() {
         </Grid>
 
         {/* Notes Card */}
-        {profile.notes && (
+        {profile?.notes && (
           <Card elevation="low" padding={4}>
             <VStack gap={1}>
               <Text size="sm" weight="semibold">Training Notes & Guidelines</Text>

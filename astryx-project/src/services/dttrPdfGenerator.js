@@ -1,8 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-/**
- * Converts a base64 Data URL or raw base64 string to a Uint8Array.
- */
 export function base64ToUint8Array(base64OrDataUrl) {
   if (!base64OrDataUrl) {
     throw new Error('No PDF data provided.');
@@ -23,9 +20,6 @@ export function base64ToUint8Array(base64OrDataUrl) {
   return bytes;
 }
 
-/**
- * Parses coordinate string hints like "x=100, y=200", "100, 200", or JSON.
- */
 function parseCoordinate(coordStr) {
   if (!coordStr || typeof coordStr !== 'string') return null;
   const trimmed = coordStr.trim();
@@ -36,9 +30,7 @@ function parseCoordinate(coordStr) {
         return { x: obj.x, y: obj.y };
       }
     }
-  } catch {
-    // Ignore JSON parse errors and continue to regex
-  }
+  } catch {}
 
   const xyMatch = trimmed.match(/x\s*[:=]\s*([0-9.-]+)[\s,]+y\s*[:=]\s*([0-9.-]+)/i);
   if (xyMatch) {
@@ -54,17 +46,8 @@ function parseCoordinate(coordStr) {
 }
 
 /**
- * Populates training logs onto an uploaded DTTR PDF template.
- *
- * @param {Object} options
- * @param {string} options.templatePdfDataUrl - Base64 data URL of the original PDF
- * @param {Object} options.headerInfo - Trainee details (studentName, agencyName, department, supervisorName, officialSchedule)
- * @param {Array}  options.monthRows - Day-by-day records (day 1..31, amArrival, amDeparture, pmArrival, pmDeparture, hours, tasks, hasRecord)
- * @param {number} options.totalHours - Sum of hours rendered in the month
- * @param {string} options.monthName - e.g. "November"
- * @param {string} options.selectedYear - e.g. "2026"
- * @param {Object} [options.fieldMap] - Optional manual field coordinate overrides
- * @returns {Promise<Uint8Array>} The populated PDF bytes
+ * Enhanced DTTR PDF Populator with intelligent auto-fitting,
+ * crisp typography, accurate coordinates, and overflow prevention.
  */
 export async function generatePopulatedDttrPdf({
   templatePdfDataUrl,
@@ -87,7 +70,6 @@ export async function generatePopulatedDttrPdf({
     throw new Error('The uploaded PDF does not contain any pages.');
   }
 
-  // DTTR is a single-page document; target page 0
   const page = pdfDoc.getPages()[0];
   const { width, height } = page.getSize();
 
@@ -96,27 +78,51 @@ export async function generatePopulatedDttrPdf({
   const BASE_HEIGHT = 936;
   const scaleX = width / BASE_WIDTH;
   const scaleY = height / BASE_HEIGHT;
+  const scaleMin = Math.min(scaleX, scaleY);
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const textColor = rgb(0, 0, 0);
 
-  // Helper: Draw horizontally centered text on a given baseline
-  const drawCentered = (text, centerX, y, size, fontToUse = font) => {
+  /**
+   * Helper: Draw centered text with automatic font-size downscaling to fit maxWidth.
+   * Prevents text from overflowing lines or colliding with neighboring elements.
+   */
+  const drawCenteredAutoFit = (text, centerX, y, baseSize, fontToUse = font, maxWidth = null, minSize = 6.0) => {
     if (!text) return;
-    const cleanText = String(text).trim();
+    let cleanText = String(text).replace(/[\r\n\t]+/g, ' ').trim();
     if (!cleanText) return;
-    const textWidth = fontToUse.widthOfTextAtSize(cleanText, size);
+
+    let fontSize = baseSize;
+    if (maxWidth && maxWidth > 0) {
+      let currentWidth = fontToUse.widthOfTextAtSize(cleanText, fontSize);
+      if (currentWidth > maxWidth) {
+        fontSize = Math.max(minSize, fontSize * (maxWidth / currentWidth));
+        currentWidth = fontToUse.widthOfTextAtSize(cleanText, fontSize);
+
+        // If still exceeds at minSize, truncate cleanly with ellipsis
+        if (currentWidth > maxWidth) {
+          while (cleanText.length > 3 && fontToUse.widthOfTextAtSize(cleanText + '...', fontSize) > maxWidth) {
+            cleanText = cleanText.slice(0, -1);
+          }
+          cleanText = cleanText.trim() + '...';
+        }
+      }
+    }
+
+    const finalWidth = fontToUse.widthOfTextAtSize(cleanText, fontSize);
     page.drawText(cleanText, {
-      x: centerX - textWidth / 2,
+      x: centerX - finalWidth / 2,
       y,
-      size,
+      size: fontSize,
       font: fontToUse,
       color: textColor,
     });
   };
 
-  // Helper: Draw left-aligned text with automatic truncation to avoid overlapping grid lines
+  /**
+   * Helper: Draw left-aligned text with automatic truncation to avoid overlapping grid lines.
+   */
   const drawLeft = (text, x, y, size, fontToUse = font, maxWidth = null) => {
     if (!text) return;
     let cleanText = String(text).replace(/[\r\n\t]+/g, ' ').trim();
@@ -144,48 +150,69 @@ export async function generatePopulatedDttrPdf({
      1. Document Header Information
   ───────────────────────────────────────────────────────────────────────────── */
   // 1A. Student Name
+  // Underline in standard template: x=[149.8, 461.8] (width ~312 pt), y=777.2
+  // Center is ~306.0 pt. Text baseline at y=781.0 (3.8pt above underline to clear descenders)
   const customNameCoord = parseCoordinate(fieldMap?.studentName);
-  const nameX = customNameCoord ? customNameCoord.x : scaleX * 300.0;
-  const nameY = customNameCoord ? customNameCoord.y : scaleY * 778.5;
-  const nameSize = Math.max(7.5, 9.5 * Math.min(scaleX, scaleY));
-  drawCentered(headerInfo.studentName || '', nameX, nameY, nameSize, fontBold);
+  const nameX = customNameCoord ? customNameCoord.x : scaleX * 306.0;
+  const nameY = customNameCoord ? customNameCoord.y : scaleY * 781.0;
+  const nameBaseSize = Math.max(8.0, 9.5 * scaleMin);
+  const nameMaxWidth = scaleX * 304.0;
+  drawCenteredAutoFit(headerInfo.studentName || '', nameX, nameY, nameBaseSize, fontBold, nameMaxWidth, 7.0);
 
   // 1B. Industry / Agency Name / Department
-  const agencyDeptText = headerInfo.agencyName
-    ? `${headerInfo.agencyName}${headerInfo.department ? ' / ' + headerInfo.department : ''}`
-    : '';
+  // Underline in standard template: x=[149.8, 461.8] (width ~312 pt), y=743.1
+  // Heading label below underline: y=731.1 "INDUSTRY / AGENCY NAME / DEPARTMENT"
+  // Text baseline at y=747.0 (3.9pt above underline to clear descenders and keep spacing readable)
+  const agencyParts = [];
+  if (headerInfo.agencyName?.trim()) agencyParts.push(headerInfo.agencyName.trim());
+  if (headerInfo.department?.trim()) agencyParts.push(headerInfo.department.trim());
+  const agencyDeptText = agencyParts.join('  /  ');
+
   const customAgencyCoord = parseCoordinate(fieldMap?.agencyName || fieldMap?.department);
-  const agencyX = customAgencyCoord ? customAgencyCoord.x : scaleX * 300.0;
-  const agencyY = customAgencyCoord ? customAgencyCoord.y : scaleY * 744.5;
-  const agencySize = Math.max(7, 8.5 * Math.min(scaleX, scaleY));
-  drawCentered(agencyDeptText, agencyX, agencyY, agencySize, fontBold);
+  const agencyX = customAgencyCoord ? customAgencyCoord.x : scaleX * 306.0;
+  const agencyY = customAgencyCoord ? customAgencyCoord.y : scaleY * 747.0;
+  const agencyBaseSize = Math.max(7.5, 8.5 * scaleMin);
+  const agencyMaxWidth = scaleX * 306.0;
+  drawCenteredAutoFit(agencyDeptText, agencyX, agencyY, agencyBaseSize, fontBold, agencyMaxWidth, 6.5);
 
   // 1C. Month
+  // Underline in standard template: x=[232.1, 380.0] (width ~148 pt), y=705.5
+  // Heading label below underline: y=693.5 "MONTH"
+  // Text baseline at y=709.0 (3.5pt above underline)
   const monthText = `${(monthName || '').toUpperCase()} ${selectedYear || ''}`.trim();
   const customMonthCoord = parseCoordinate(fieldMap?.month);
-  const monthX = customMonthCoord ? customMonthCoord.x : scaleX * 300.0;
-  const monthY = customMonthCoord ? customMonthCoord.y : scaleY * 707.5;
-  const monthSize = Math.max(7, 8.5 * Math.min(scaleX, scaleY));
-  drawCentered(monthText, monthX, monthY, monthSize, fontBold);
+  const monthX = customMonthCoord ? customMonthCoord.x : scaleX * 306.0;
+  const monthY = customMonthCoord ? customMonthCoord.y : scaleY * 709.0;
+  const monthBaseSize = Math.max(7.5, 8.5 * scaleMin);
+  const monthMaxWidth = scaleX * 144.0;
+  drawCenteredAutoFit(monthText, monthX, monthY, monthBaseSize, fontBold, monthMaxWidth, 6.8);
 
   // 1D. Official Schedule (4 slots: AM Arrival, AM Departure, PM Arrival, PM Departure)
+  // Exact slot underlines:
+  // Slot 1: [205.7, 248.0] -> center ~227.0
+  // Slot 2: [258.0, 298.0] -> center ~277.5
+  // Slot 3: [308.0, 348.0] -> center ~328.0
+  // Slot 4: [356.0, 396.0] -> center ~377.5
+  // Hyphens are at 251.9, 302.3, 350.7; underline y=679.0; baseline y=682.5
   const scheduleSlots = headerInfo.officialSchedule
     ? headerInfo.officialSchedule.split(' - ')
     : ['', '', '', ''];
   while (scheduleSlots.length < 4) scheduleSlots.push('');
 
   const scheduleBaseCoords = [
-    { x: 212.0, y: 681.0 },
-    { x: 261.5, y: 681.0 },
-    { x: 311.0, y: 681.0 },
-    { x: 360.0, y: 681.0 },
+    { x: 227.0, y: 682.5 },
+    { x: 277.5, y: 682.5 },
+    { x: 328.0, y: 682.5 },
+    { x: 377.5, y: 682.5 },
   ];
-  const schedSize = Math.max(6, 7.5 * Math.min(scaleX, scaleY));
+  const schedSize = Math.max(6.2, 7.5 * scaleMin);
+  const slotMaxWidth = scaleX * 42.0;
+
   scheduleSlots.forEach((slot, idx) => {
-    if (slot && idx < scheduleBaseCoords.length) {
+    if (slot?.trim() && idx < scheduleBaseCoords.length) {
       const sx = scaleX * scheduleBaseCoords[idx].x;
       const sy = scaleY * scheduleBaseCoords[idx].y;
-      drawCentered(slot, sx, sy, schedSize, fontBold);
+      drawCenteredAutoFit(slot.trim(), sx, sy, schedSize, fontBold, slotMaxWidth, 5.8);
     }
   });
 
@@ -196,7 +223,6 @@ export async function generatePopulatedDttrPdf({
   const DAY1_Y = 621.5;
   const ROW_STEP_Y = 14.0;
 
-  // Center X coordinates of the columns on standard layout
   const colCenters = {
     amArrival: scaleX * 80.9,
     amDeparture: scaleX * 118.2,
@@ -207,37 +233,29 @@ export async function generatePopulatedDttrPdf({
   const tasksStartX = scaleX * 260.0;
   const tasksMaxWidth = scaleX * 314.0;
 
-  const tableFontSize = Math.max(5.8, 7.0 * Math.min(scaleX, scaleY));
+  const tableFontSize = Math.max(6.0, 7.0 * scaleMin);
 
-  // Loop through all 31 days
   for (let day = 1; day <= 31; day++) {
     const row = monthRows.find((r) => r.day === day);
     if (!row || !row.hasRecord) continue;
 
     const rowY = scaleY * (DAY1_Y - (day - 1) * ROW_STEP_Y);
 
-    // AM Arrival & Departure
     if (row.amArrival) {
-      drawCentered(row.amArrival, colCenters.amArrival, rowY, tableFontSize, font);
+      drawCenteredAutoFit(row.amArrival, colCenters.amArrival, rowY, tableFontSize, font, scaleX * 34.0, 5.5);
     }
     if (row.amDeparture) {
-      drawCentered(row.amDeparture, colCenters.amDeparture, rowY, tableFontSize, font);
+      drawCenteredAutoFit(row.amDeparture, colCenters.amDeparture, rowY, tableFontSize, font, scaleX * 34.0, 5.5);
     }
-
-    // PM Arrival & Departure
     if (row.pmArrival) {
-      drawCentered(row.pmArrival, colCenters.pmArrival, rowY, tableFontSize, font);
+      drawCenteredAutoFit(row.pmArrival, colCenters.pmArrival, rowY, tableFontSize, font, scaleX * 34.0, 5.5);
     }
     if (row.pmDeparture) {
-      drawCentered(row.pmDeparture, colCenters.pmDeparture, rowY, tableFontSize, font);
+      drawCenteredAutoFit(row.pmDeparture, colCenters.pmDeparture, rowY, tableFontSize, font, scaleX * 34.0, 5.5);
     }
-
-    // Hours
     if (row.hours) {
-      drawCentered(String(row.hours), colCenters.hours, rowY, tableFontSize, fontBold);
+      drawCenteredAutoFit(String(row.hours), colCenters.hours, rowY, tableFontSize, fontBold, scaleX * 36.0, 5.5);
     }
-
-    // Tasks / Assignments Performed
     if (row.tasks) {
       drawLeft(row.tasks, tasksStartX, rowY, tableFontSize, font, tasksMaxWidth);
     }
@@ -255,14 +273,22 @@ export async function generatePopulatedDttrPdf({
   const totalHoursValue = Number(totalHours) || 0;
   if (totalHoursValue > 0) {
     const totalHoursStr = totalHoursValue.toFixed(1);
-    let totalSize = Math.max(6.5, 8.0 * Math.min(scaleX, scaleY));
-    // Ensure the number fits cleanly inside the 39.5 pt box with safe horizontal padding
+    const totalBaseSize = Math.max(7.0, 8.5 * scaleMin);
     const maxBoxWidth = scaleX * 35.5;
-    const textWidthAtBase = fontBold.widthOfTextAtSize(totalHoursStr, totalSize);
-    if (textWidthAtBase > maxBoxWidth) {
-      totalSize = Math.max(5.5, totalSize * (maxBoxWidth / textWidthAtBase));
-    }
-    drawCentered(totalHoursStr, totalCenterX, totalBaselineY, totalSize, fontBold);
+    drawCenteredAutoFit(totalHoursStr, totalCenterX, totalBaselineY, totalBaseSize, fontBold, maxBoxWidth, 5.5);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     4. Supervisor Signature Name (Optional / Professional Complete Overlay)
+  ───────────────────────────────────────────────────────────────────────────── */
+  // Underline at y=104.0; heading at y=93.4 "HTE Supervisor’s Name & Signature"
+  if (headerInfo.supervisorName?.trim()) {
+    const customSuperCoord = parseCoordinate(fieldMap?.supervisorSignature);
+    const superX = customSuperCoord ? customSuperCoord.x : scaleX * 326.0;
+    const superY = customSuperCoord ? customSuperCoord.y : scaleY * 107.5;
+    const superBaseSize = Math.max(7.5, 8.5 * scaleMin);
+    const superMaxWidth = scaleX * 144.0;
+    drawCenteredAutoFit(headerInfo.supervisorName.trim(), superX, superY, superBaseSize, fontBold, superMaxWidth, 6.5);
   }
 
   return await pdfDoc.save();

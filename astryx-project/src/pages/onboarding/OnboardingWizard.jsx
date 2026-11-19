@@ -21,6 +21,8 @@ import {
   loadOnboardingData,
   saveOnboardingData,
   completeOnboarding,
+  fetchRemoteOnboardingData,
+  syncOnboardingDraftToBackend,
   calculateTrainingDays,
   calculateDailySessionHours,
   validateSessionsConfig,
@@ -32,6 +34,31 @@ export function OnboardingWizard({ onComplete }) {
   const [data, setData] = useState(() => loadOnboardingData());
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Restore remote onboarding state from backend across browsers/devices
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const remote = await fetchRemoteOnboardingData();
+        if (isMounted && remote) {
+          setData(remote);
+          if (remote.onboardingCompleted) {
+            onComplete?.(remote);
+            return;
+          }
+          if (remote.onboardingStep && remote.onboardingStep > 0 && remote.onboardingStep < 4) {
+            setActiveStep(remote.onboardingStep);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not restore remote onboarding draft:', err);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Auto-save draft on data changes to preserve state
   useEffect(() => {
@@ -161,7 +188,9 @@ export function OnboardingWizard({ onComplete }) {
     }
     setErrors({});
     if (activeStep < 3) {
-      setActiveStep((prev) => prev + 1);
+      const nextStep = activeStep + 1;
+      setActiveStep(nextStep);
+      syncOnboardingDraftToBackend(data, nextStep);
     }
   };
 
@@ -172,7 +201,7 @@ export function OnboardingWizard({ onComplete }) {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const stepErrors = validateStep(3);
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
@@ -180,11 +209,14 @@ export function OnboardingWizard({ onComplete }) {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      completeOnboarding(data);
+    try {
+      await completeOnboarding(data);
+    } catch (err) {
+      console.warn('Onboarding completion error:', err);
+    } finally {
       setIsSubmitting(false);
       onComplete?.(data);
-    }, 600);
+    }
   };
 
   return (

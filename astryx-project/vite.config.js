@@ -63,8 +63,10 @@ export default defineConfig({
         globPatterns: [
           '**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}',
         ],
+        // Exclude the pdfjs standard_fonts and cmaps from precache (too large; served fresh)
+        globIgnores: ['pdfjs/**'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /\/offline\.html$/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/sanctum\//, /\/offline\.html$/],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: false,
@@ -85,23 +87,84 @@ export default defineConfig({
               },
             },
           },
+          // Cache pdfjs fonts/cmaps at runtime (fetched on demand, cached for offline)
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/pdfjs/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ojt-pdfjs-assets',
+              expiration: {
+                maxEntries: 300,
+                maxAgeSeconds: 60 * 60 * 24 * 90,
+              },
+            },
+          },
         ],
       },
 
       devOptions: {
-        enabled: true,
+        // Disabled: SW in dev mode intercepts /sanctum/csrf-cookie before the
+        // Vite proxy can forward it, preventing cookie-based Sanctum auth.
+        // The PWA Service Worker is active only in production builds.
+        enabled: false,
         type: 'module',
         navigateFallback: 'index.html',
       },
     }),
   ],
 
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+    allowedHosts: [
+      'hamster-prelude-schnapps.ngrok-free.dev',
+      '.ngrok-free.dev',
+      '.ngrok.io',
+      '.ngrok.app',
+    ],
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        headers: {
+          Connection: 'close',
+        },
+      },
+      '/sanctum': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        headers: {
+          Connection: 'close',
+        },
+      },
+    },
+  },
   preview: {
     host: '0.0.0.0',
     port: 4173,
     strictPort: true,
     allowedHosts: [
       'hamster-prelude-schnapps.ngrok-free.dev',
+      '.ngrok-free.dev',
+      '.ngrok.io',
+      '.ngrok.app',
     ],
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        headers: {
+          Connection: 'close',
+        },
+      },
+      '/sanctum': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        headers: {
+          Connection: 'close',
+        },
+      },
+    },
   },
 })

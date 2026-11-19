@@ -470,43 +470,22 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
       return;
     }
 
+    // Try printing vector PDF directly in a dedicated popup window
     try {
-      let iframe = document.getElementById('dttr-hidden-print-frame');
-      if (iframe) {
-        iframe.remove();
+      const printWin = window.open(targetPdfUrl, '_blank');
+      if (printWin) {
+        printWin.focus();
+        setTimeout(() => {
+          try {
+            printWin.print();
+          } catch {}
+        }, 600);
+        return;
       }
-      iframe = document.createElement('iframe');
-      iframe.id = 'dttr-hidden-print-frame';
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = 'none';
-      iframe.style.visibility = 'hidden';
-      document.body.appendChild(iframe);
+    } catch {}
 
-      iframe.src = targetPdfUrl;
-      iframe.onload = () => {
-        try {
-          setTimeout(() => {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-          }, 250);
-        } catch {
-          window.print();
-        }
-      };
-
-      // Safety timeout in case iframe onload does not fire
-      setTimeout(() => {
-        if (!iframe.contentWindow) {
-          window.print();
-        }
-      }, 1200);
-    } catch {
-      window.print();
-    }
+    // Fallback: browser print engine rendering the 300 DPI print portal canvas
+    window.print();
   };
 
   const handleSaveFieldMap = () => {
@@ -965,13 +944,14 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
                     fontSize: '9pt',
                     paddingBottom: 2,
                     minHeight: 18,
+                    wordBreak: 'break-word',
+                    overflowWrap: 'anywhere',
+                    whiteSpace: 'normal',
                   }}
                 >
-                  {headerInfo.agencyName
-                    ? `${headerInfo.agencyName}${headerInfo.department ? ' / ' + headerInfo.department : ''}`
-                    : ''}
+                  {[headerInfo.agencyName, headerInfo.department].filter(Boolean).join('  /  ')}
                 </div>
-                <div style={{ fontSize: '7.5pt', fontWeight: 'bold', letterSpacing: '0.04em', marginTop: 2, textAlign: 'center' }}>
+                <div style={{ fontSize: '7.5pt', fontWeight: 'bold', letterSpacing: '0.02em', marginTop: 2, textAlign: 'center', whiteSpace: 'nowrap' }}>
                   INDUSTRY / AGENCY NAME / DEPARTMENT
                 </div>
               </div>
@@ -1114,6 +1094,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
           <CleanPdfViewer
             pdfData={activeTab === 'original' ? template.dataUrl : (populatedPdfUrl || template.dataUrl)}
             zoomPercent={100}
+            targetDpi={300}
             id="dttr-portal-clean-pdf"
           />
         </div>,

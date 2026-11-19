@@ -1,236 +1,109 @@
 /**
  * Authentication Service for OJT Tracker
  * 
- * Note on Architecture:
- * - This frontend currently runs standalone (no Laravel backend is present in the workspace).
- * - Plaintext passwords are NEVER stored in localStorage or sessionStorage.
- * - Passwords are cryptographically hashed using Web Crypto API SHA-256 with unique per-user salts.
- * - This service provides an API-ready interface (registerUser, loginUser, logoutUser, getCurrentUser)
- *   that can seamlessly connect to Laravel Sanctum / session authentication endpoints when deployed.
+ * Powered by Laravel Sanctum SPA Cookie-based Session Authentication.
+ * - CSRF handshake via /sanctum/csrf-cookie
+ * - Session cookies with credentials: 'include'
+ * - Offline-resilient user session caching
  */
 
-const ACCOUNTS_STORAGE_KEY = 'ojt_registered_accounts';
+import apiClient, { ApiError } from './apiClient.js';
+
 const SESSION_STORAGE_KEY = 'ojt_auth_session';
 
 /**
- * Generates a random cryptographic salt as a hex string.
+ * Fetches the list of registered schools for selection.
  */
-function generateSalt(length = 16) {
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-    return Array.from(array)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
-/**
- * Hashes a password string with salt using Web Crypto SHA-256.
- * Falls back safely to a deterministic hash if SubtleCrypto is unavailable.
- */
-async function hashPasswordWithSalt(password, salt) {
-  const saltedPassword = `${salt}:${password}`;
-  if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(saltedPassword);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  // Deterministic fallback if subtle is unavailable in older environments
-  let hash = 0;
-  for (let i = 0; i < saltedPassword.length; i++) {
-    const char = saltedPassword.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return `fallback_${Math.abs(hash).toString(16)}`;
-}
-
-/**
- * Loads all registered accounts from storage.
- */
-export function getRegisteredAccounts() {
-  if (typeof localStorage === 'undefined') return [];
+export async function getSchools(search = '') {
   try {
-    const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const url = search ? `/api/schools?search=${encodeURIComponent(search)}` : '/api/schools';
+    const data = await apiClient.get(url);
+    return data?.schools || [];
   } catch (err) {
-    console.error('Failed to load registered accounts', err);
+    console.warn('Failed to load schools from API, returning empty list', err);
     return [];
   }
 }
 
 /**
- * Saves registered accounts to storage.
+ * Normalizes backend user structure for React frontend consumption.
  */
-function saveRegisteredAccounts(accounts) {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
-  } catch (err) {
-    console.error('Failed to save registered accounts', err);
-  }
-}
-
-/**
- * Checks if a specific email has a registered account.
- */
-export function isEmailRegistered(email) {
-  if (!email) return false;
-  const accounts = getRegisteredAccounts();
-  const normalized = email.trim().toLowerCase();
-  return accounts.some((a) => a.email.toLowerCase() === normalized);
-}
-
-/**
- * Registers a new student account.
- * Plaintext passwords are not persisted; only the salt and SHA-256 hash are stored.
- */
-export async function registerUser({ fullName, studentId, email, password }) {
-  const normalizedEmail = String(email || '').trim().toLowerCase();
-  const trimmedName = String(fullName || '').trim();
-  const trimmedStudentId = String(studentId || '').trim();
-
-  if (!trimmedName) {
-    return { success: false, error: 'Full name is required.' };
-  }
-  if (!trimmedStudentId) {
-    return { success: false, error: 'Student ID number is required.' };
-  }
-  if (!normalizedEmail) {
-    return { success: false, error: 'Email address is required.' };
-  }
-  if (!password || password.length < 8) {
-    return { success: false, error: 'Password must be at least 8 characters long.' };
-  }
-
-  const accounts = getRegisteredAccounts();
-  const existing = accounts.find((a) => a.email.toLowerCase() === normalizedEmail);
-  if (existing) {
-    return { success: false, error: 'An account with this email address already exists. Please log in.' };
-  }
-
-  const salt = generateSalt(16);
-  const passwordHash = await hashPasswordWithSalt(password, salt);
-
-  const newUser = {
-    id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-    fullName: trimmedName,
-    studentId: trimmedStudentId,
-    email: normalizedEmail,
-    salt,
-    passwordHash,
-    createdAt: new Date().toISOString(),
-  };
-
-  accounts.push(newUser);
-  saveRegisteredAccounts(accounts);
-
-  // Return public safe user info
+function normalizeUser(backendUser) {
+  if (!backendUser) return null;
+  const profile = backendUser.student_profile || {};
   return {
-    success: true,
-    user: {
-      id: newUser.id,
-      fullName: newUser.fullName,
-      studentId: newUser.studentId,
-      email: newUser.email,
-    },
+    id: backendUser.id,
+    fullName: backendUser.name || '',
+    name: backendUser.name || '',
+    email: backendUser.email || '',
+    studentId: profile.student_id || '',
+    schoolId: profile.school?.id || profile.school_id || null,
+    schoolName: profile.school?.name || '',
+    companyId: profile.company?.id || profile.company_id || null,
+    companyName: profile.company_name || profile.company?.name || '',
+    requiredHours: profile.required_hours || 600,
+    onboardingCompleted: Boolean(profile.onboarding_completed),
+    onboardingStep: Number(profile.onboarding_step) || 0,
+    emailVerifiedAt: backendUser.email_verified_at || null,
+    isEmailVerified: Boolean(backendUser.email_verified_at),
+    studentProfile: profile,
   };
 }
 
 /**
- * Authenticates a student with email and password.
- * Rejects unregistered accounts and incorrect passwords with specific error messages.
+ * Saves authenticated user session to browser storage.
  */
-export async function loginUser({ email, password }) {
-  const normalizedEmail = String(email || '').trim().toLowerCase();
-
-  if (!normalizedEmail) {
-    return { success: false, error: 'Email address is required.' };
-  }
-  if (!password) {
-    return { success: false, error: 'Password is required.' };
-  }
-
-  const accounts = getRegisteredAccounts();
-  const user = accounts.find((a) => a.email.toLowerCase() === normalizedEmail);
-
-  if (!user) {
-    return {
-      success: false,
-      error: 'Account not found. Please register first.',
-      code: 'ACCOUNT_NOT_FOUND',
-    };
-  }
-
-  const inputHash = await hashPasswordWithSalt(password, user.salt);
-  if (inputHash !== user.passwordHash) {
-    return {
-      success: false,
-      error: 'Incorrect email or password.',
-      code: 'INVALID_CREDENTIALS',
-    };
-  }
-
-  // Create safe authenticated session
-  const sessionUser = {
-    id: user.id,
-    fullName: user.fullName,
-    studentId: user.studentId,
-    email: user.email,
-  };
-
+function saveSession(user) {
+  if (!user || typeof window === 'undefined') return;
   const session = {
-    token: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    user: sessionUser,
+    user,
     loggedInAt: new Date().toISOString(),
   };
-
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
     sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-
-    // Synchronize to stored student profile if needed
-    const rawProfile = localStorage.getItem('ojt_student_profile');
-    const profile = rawProfile ? JSON.parse(rawProfile) : {};
-    localStorage.setItem(
-      'ojt_student_profile',
-      JSON.stringify({
-        ...profile,
-        fullName: sessionUser.fullName,
-        studentId: sessionUser.studentId,
-      })
-    );
   } catch (err) {
-    console.error('Failed to save session', err);
+    console.error('Failed to save session to storage', err);
   }
-
-  return {
-    success: true,
-    user: sessionUser,
-  };
 }
 
 /**
- * Gets the currently authenticated user from session.
+ * Clears authenticated user session from browser storage.
+ */
+function clearSession() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (err) {
+    console.error('Failed to clear session from storage', err);
+  }
+}
+
+/**
+ * Gets the currently cached authenticated user (synchronous for initial render).
  */
 export function getCurrentUser() {
-  if (typeof localStorage === 'undefined' && typeof sessionStorage === 'undefined') return null;
+  if (typeof window === 'undefined') return null;
   try {
-    const raw = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(SESSION_STORAGE_KEY)) ||
-      (typeof localStorage !== 'undefined' && localStorage.getItem(SESSION_STORAGE_KEY));
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY) || localStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw);
     return session?.user || null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Updates the current user session with partial data and persists to storage.
+ */
+export function updateCurrentUserSession(partial) {
+  const current = getCurrentUser();
+  if (!current) return;
+  const updated = { ...current, ...partial };
+  saveSession(updated);
+  return updated;
 }
 
 /**
@@ -241,13 +114,197 @@ export function isAuthenticated() {
 }
 
 /**
- * Logs out the currently authenticated user and clears session tokens.
+ * Refreshes and verifies the current user session against Laravel Sanctum /api/user.
  */
-export function logoutUser() {
+export async function fetchCurrentUser() {
   try {
-    if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    if (typeof localStorage !== 'undefined') localStorage.removeItem(SESSION_STORAGE_KEY);
+    const data = await apiClient.get('/api/user');
+    const user = normalizeUser(data?.user);
+    if (user) {
+      saveSession(user);
+    }
+    return user;
   } catch (err) {
-    console.error('Failed to clear session', err);
+    if (err.status === 401) {
+      clearSession();
+    }
+    return null;
+  }
+}
+
+/**
+ * Registers a new student account via Laravel Sanctum endpoint POST /api/register.
+ */
+export async function registerUser({
+  fullName,
+  name,
+  studentId,
+  email,
+  password,
+  confirmPassword,
+  password_confirmation,
+  schoolId,
+  school_id,
+  requiredHours = 600,
+}) {
+  const effectiveName = String(fullName || name || '').trim();
+  const effectiveStudentId = String(studentId || '').trim();
+  const effectiveEmail = String(email || '').trim().toLowerCase();
+  const effectiveConfirmation = confirmPassword || password_confirmation || password;
+
+  let effectiveSchoolId = Number(schoolId || school_id);
+  if (!effectiveSchoolId || isNaN(effectiveSchoolId)) {
+    // Resolve default or first available school if not explicitly selected
+    try {
+      const schools = await getSchools();
+      effectiveSchoolId = schools[0]?.id || 1;
+    } catch {
+      effectiveSchoolId = 1;
+    }
+  }
+
+  try {
+    const payload = {
+      name: effectiveName,
+      email: effectiveEmail,
+      password,
+      password_confirmation: effectiveConfirmation,
+      school_id: effectiveSchoolId,
+      student_id: effectiveStudentId,
+      required_hours: Number(requiredHours) || 600,
+    };
+
+    const res = await apiClient.post('/api/register', payload);
+    const user = normalizeUser(res?.user);
+    if (user) {
+      saveSession(user);
+      if (user.onboardingCompleted && typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem(`ojt_onboarding_completed_${user.id}`, 'true');
+        } catch {}
+      }
+    }
+
+    return {
+      success: true,
+      user,
+      message: res?.message || 'Registration successful.',
+    };
+  } catch (err) {
+    const firstErrorMessage =
+      err.errors && Object.values(err.errors)[0]
+        ? Object.values(err.errors)[0][0]
+        : err.message || 'Registration failed.';
+
+    return {
+      success: false,
+      error: firstErrorMessage,
+      errors: err.errors || {},
+    };
+  }
+}
+
+/**
+ * Authenticates a student via Laravel Sanctum endpoint POST /api/login.
+ */
+export async function loginUser({ email, password, remember = true }) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return { success: false, error: 'Email address is required.' };
+  }
+  if (!password) {
+    return { success: false, error: 'Password is required.' };
+  }
+
+  try {
+    const res = await apiClient.post('/api/login', {
+      email: normalizedEmail,
+      password,
+      remember: Boolean(remember),
+    });
+
+    const user = normalizeUser(res?.user);
+    if (user) {
+      saveSession(user);
+      if (user.onboardingCompleted && typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem(`ojt_onboarding_completed_${user.id}`, 'true');
+        } catch {}
+      }
+    }
+
+    return {
+      success: true,
+      user,
+      message: res?.message || 'Logged in successfully.',
+    };
+  } catch (err) {
+    const code = err.status === 422 ? 'INVALID_CREDENTIALS' : 'AUTH_ERROR';
+    const firstErrorMessage =
+      err.errors && Object.values(err.errors)[0]
+        ? Object.values(err.errors)[0][0]
+        : err.message || 'Invalid email or password.';
+
+    return {
+      success: false,
+      error: firstErrorMessage,
+      code,
+      status: err.status,
+    };
+  }
+}
+
+/**
+ * Logs out the currently authenticated user via POST /api/logout.
+ */
+export async function logoutUser() {
+  try {
+    await apiClient.post('/api/logout', {});
+  } catch (err) {
+    console.warn('Backend logout request failed or network offline', err);
+  } finally {
+    clearSession();
+  }
+}
+
+/**
+ * Requests a password reset link email via POST /api/forgot-password.
+ */
+export async function requestPasswordReset(email) {
+  try {
+    const res = await apiClient.post('/api/forgot-password', { email });
+    return { success: true, message: res?.message || 'Password reset link sent.' };
+  } catch (err) {
+    return { success: false, error: err.message || 'Failed to send reset link.' };
+  }
+}
+
+/**
+ * Resets user password via POST /api/reset-password.
+ */
+export async function resetPassword({ token, email, password, password_confirmation }) {
+  try {
+    const res = await apiClient.post('/api/reset-password', {
+      token,
+      email,
+      password,
+      password_confirmation,
+    });
+    return { success: true, message: res?.message || 'Password has been reset.' };
+  } catch (err) {
+    return { success: false, error: err.message || 'Failed to reset password.' };
+  }
+}
+
+/**
+ * Resends email verification notification via POST /api/email/verification-notification.
+ */
+export async function resendVerificationEmail() {
+  try {
+    const res = await apiClient.post('/api/email/verification-notification', {});
+    return { success: true, message: res?.message || 'Verification email resent.' };
+  } catch (err) {
+    return { success: false, error: err.message || 'Failed to resend verification email.' };
   }
 }

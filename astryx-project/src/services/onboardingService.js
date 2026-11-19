@@ -1,5 +1,6 @@
 import { saveStoredProfile, loadStoredProfile } from './profileService.js';
-import { getCurrentUser } from './authService.js';
+import { getCurrentUser, updateCurrentUserSession } from './authService.js';
+import apiClient from './apiClient.js';
 
 export function getOnboardingStorageKey(userId = null) {
   const effectiveId = userId || getCurrentUser()?.id || 'guest';
@@ -285,7 +286,15 @@ export function isOnboardingCompleted(userId = null) {
   if (typeof window === 'undefined') return false;
   try {
     const key = getOnboardingStatusKey(userId);
-    return localStorage.getItem(key) === 'true';
+    const localVal = localStorage.getItem(key);
+    if (localVal === 'true') return true;
+
+    // Check user in session
+    const currentUser = getCurrentUser();
+    if (currentUser?.onboardingCompleted || currentUser?.studentProfile?.onboarding_completed) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -304,6 +313,9 @@ export function loadOnboardingData(userId = null) {
     return {
       ...DEFAULT_ONBOARDING_DATA,
       ...parsed,
+      workingDays: Array.isArray(parsed.workingDays) && parsed.workingDays.length > 0
+        ? parsed.workingDays
+        : DEFAULT_ONBOARDING_DATA.workingDays,
       morningEnabled: parsed.morningEnabled !== undefined ? Boolean(parsed.morningEnabled) : true,
       morningTimeIn: parsed.morningTimeIn || DEFAULT_ONBOARDING_DATA.morningTimeIn,
       morningTimeOut: parsed.morningTimeOut || DEFAULT_ONBOARDING_DATA.morningTimeOut,
@@ -330,10 +342,75 @@ export function saveOnboardingData(data, userId = null) {
 }
 
 /**
- * Completes onboarding and synchronizes profile and training hours.
+ * Fetches the user's remote profile and reconstructs full onboarding state across browsers.
  */
-export function completeOnboarding(data, userId = null) {
-  if (typeof window === 'undefined') return;
+export async function fetchRemoteOnboardingData(userId = null) {
+  try {
+    const data = await apiClient.get('/api/student-profile');
+    const profile = data?.profile;
+    if (!profile) return null;
+
+    const effectiveDailyHours = profile.hours_per_day ? Number(profile.hours_per_day) : 8;
+    const workingDays = Array.isArray(profile.working_days) && profile.working_days.length > 0
+      ? profile.working_days
+      : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    const mapped = {
+      requiredHours: profile.required_hours || 600,
+      dailyWorkingHours: effectiveDailyHours,
+      startDate: profile.start_date || new Date().toISOString().slice(0, 10),
+      workingDays,
+      morningEnabled: profile.morning_enabled !== undefined ? Boolean(profile.morning_enabled) : true,
+      morningTimeIn: profile.morning_start ? profile.morning_start.slice(0, 5) : '08:00',
+      morningTimeOut: profile.morning_end ? profile.morning_end.slice(0, 5) : '12:00',
+      afternoonEnabled: profile.afternoon_enabled !== undefined ? Boolean(profile.afternoon_enabled) : true,
+      afternoonTimeIn: profile.afternoon_start ? profile.afternoon_start.slice(0, 5) : '13:00',
+      afternoonTimeOut: profile.afternoon_end ? profile.afternoon_end.slice(0, 5) : '17:00',
+      schoolName: profile.school?.name || '',
+      program: profile.program || '',
+      yearLevel: profile.year_level || '',
+      schoolDepartment: profile.school_department || '',
+      companyName: profile.company_name || profile.company?.name || '',
+      companyAddress: profile.company_address || profile.company?.address || '',
+      companyDepartment: profile.company_department || '',
+      supervisorName: profile.supervisor_name || '',
+      supervisorEmail: profile.supervisor_email || '',
+      internshipRole: profile.internship_role || '',
+      onboardingCompleted: Boolean(profile.onboarding_completed),
+      onboardingStep: Number(profile.onboarding_step) || 0,
+    };
+
+    const effectiveId = userId || getCurrentUser()?.id;
+    saveOnboardingData(mapped, effectiveId);
+
+    if (profile.onboarding_completed && typeof localStorage !== 'undefined') {
+      const statusKey = getOnboardingStatusKey(effectiveId);
+      localStorage.setItem(statusKey, 'true');
+    }
+
+    return mapped;
+  } catch (err) {
+    console.warn('[onboardingService] Could not fetch remote onboarding data:', err);
+    return null;
+  }
+}
+
+function toTimeString(val) {
+  if (!val) return null;
+  const parts = String(val).trim().split(':');
+  if (parts.length >= 2) {
+    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:00`;
+  }
+  return null;
+}
+
+/**
+ * Synchronizes partial onboarding progress to the Laravel backend as the user advances.
+ */
+export async function syncOnboardingDraftToBackend(data, stepIndex, userId = null) {
+  const effectiveId = userId || getCurrentUser()?.id;
+  saveOnboardingData(data, effectiveId);
+
   try {
     const sessionHours = calculateDailySessionHours(data);
     const effectiveDailyHours =
@@ -341,45 +418,137 @@ export function completeOnboarding(data, userId = null) {
         ? sessionHours.totalHours
         : Number(data.dailyWorkingHours) || 8;
 
-    const updatedData = {
-      ...data,
-      dailyWorkingHours: effectiveDailyHours,
+    const payload = {
+      onboarding_step: stepIndex,
+      required_hours: Number(data.requiredHours) || 600,
+      hours_per_day: effectiveDailyHours,
+      start_date: data.startDate || null,
+      working_days: data.workingDays || [],
+      morning_enabled: Boolean(data.morningEnabled),
+      morning_start: toTimeString(data.morningTimeIn),
+      morning_end: toTimeString(data.morningTimeOut),
+      afternoon_enabled: Boolean(data.afternoonEnabled),
+      afternoon_start: toTimeString(data.afternoonTimeIn),
+      afternoon_end: toTimeString(data.afternoonTimeOut),
+      school_name: data.schoolName || null,
+      program: data.program || null,
+      year_level: data.yearLevel || null,
+      school_department: data.schoolDepartment || null,
+      company_name: data.companyName || null,
+      company_address: data.companyAddress || null,
+      company_department: data.companyDepartment || null,
+      supervisor_name: data.supervisorName || null,
+      supervisor_email: data.supervisorEmail || null,
+      internship_role: data.internshipRole || null,
     };
 
-    saveOnboardingData(updatedData, userId);
-    const statusKey = getOnboardingStatusKey(userId);
-    localStorage.setItem(statusKey, 'true');
-
-    // Synchronize to student profile
-    const existingProfile = loadStoredProfile(userId);
-    const scheduleParts = [];
-    if (data.morningEnabled) scheduleParts.push(`AM: ${data.morningTimeIn}-${data.morningTimeOut}`);
-    if (data.afternoonEnabled) scheduleParts.push(`PM: ${data.afternoonTimeIn}-${data.afternoonTimeOut}`);
-    const schedSummary = scheduleParts.join(' · ') || `${effectiveDailyHours} hrs/day`;
-
-    const updatedProfile = {
-      ...existingProfile,
-      program: data.program || existingProfile.program,
-      institution: data.schoolName || existingProfile.institution,
-      company: data.companyName || existingProfile.company,
-      department: data.companyDepartment || existingProfile.department,
-      supervisor: data.supervisorName || existingProfile.supervisor,
-      startDate: data.startDate || existingProfile.startDate,
-      notes: `Target: ${data.requiredHours} hours · ${data.internshipRole || 'Intern'} · Schedule: ${schedSummary}`,
-    };
-
-    const completion = calculateEstimatedCompletionDate(
-      data.startDate,
-      data.requiredHours,
-      effectiveDailyHours,
-      data.workingDays
-    );
-    if (completion) {
-      updatedProfile.targetEndDate = completion.iso;
-    }
-
-    saveStoredProfile(updatedProfile, userId);
+    await apiClient.put('/api/student-profile', payload);
   } catch (err) {
-    console.error('Failed to complete onboarding', err);
+    console.warn('[onboardingService] Draft sync error (non-fatal):', err);
+  }
+}
+
+/**
+ * Completes onboarding and synchronizes profile and training hours to both local storage and Laravel.
+ */
+export async function completeOnboarding(data, userId = null) {
+  const effectiveId = userId || getCurrentUser()?.id;
+  const sessionHours = calculateDailySessionHours(data);
+  const effectiveDailyHours =
+    sessionHours.totalHours > 0
+      ? sessionHours.totalHours
+      : Number(data.dailyWorkingHours) || 8;
+
+  const updatedData = {
+    ...data,
+    dailyWorkingHours: effectiveDailyHours,
+    onboardingCompleted: true,
+  };
+
+  saveOnboardingData(updatedData, effectiveId);
+  const statusKey = getOnboardingStatusKey(effectiveId);
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(statusKey, 'true');
+  }
+
+  // Calculate completion date
+  const completion = calculateEstimatedCompletionDate(
+    data.startDate,
+    data.requiredHours,
+    effectiveDailyHours,
+    data.workingDays
+  );
+
+  // Synchronize to student profile locally
+  const existingProfile = loadStoredProfile(effectiveId);
+  const scheduleParts = [];
+  if (data.morningEnabled) scheduleParts.push(`AM: ${data.morningTimeIn}-${data.morningTimeOut}`);
+  if (data.afternoonEnabled) scheduleParts.push(`PM: ${data.afternoonTimeIn}-${data.afternoonTimeOut}`);
+  const schedSummary = scheduleParts.join(' · ') || `${effectiveDailyHours} hrs/day`;
+
+  const updatedProfile = {
+    ...existingProfile,
+    requiredHours: Number(data.requiredHours) || 600,
+    hoursPerDay: effectiveDailyHours,
+    startDate: data.startDate || existingProfile.startDate,
+    targetEndDate: completion?.iso || existingProfile.targetEndDate,
+    workingDays: data.workingDays,
+    program: data.program || existingProfile.program,
+    yearLevel: data.yearLevel || existingProfile.yearLevel,
+    schoolDepartment: data.schoolDepartment || existingProfile.schoolDepartment,
+    institution: data.schoolName || existingProfile.institution,
+    company: data.companyName || existingProfile.company,
+    companyAddress: data.companyAddress || existingProfile.companyAddress,
+    department: data.companyDepartment || existingProfile.department,
+    supervisor: data.supervisorName || existingProfile.supervisor,
+    supervisorEmail: data.supervisorEmail || existingProfile.supervisorEmail,
+    internshipRole: data.internshipRole || existingProfile.internshipRole,
+    morningEnabled: Boolean(data.morningEnabled),
+    morningStart: data.morningTimeIn,
+    morningEnd: data.morningTimeOut,
+    afternoonEnabled: Boolean(data.afternoonEnabled),
+    afternoonStart: data.afternoonTimeIn,
+    afternoonEnd: data.afternoonTimeOut,
+    onboardingCompleted: true,
+    onboardingStep: 4,
+    notes: `Target: ${data.requiredHours} hours · ${data.internshipRole || 'Intern'} · Schedule: ${schedSummary}`,
+  };
+
+  saveStoredProfile(updatedProfile, effectiveId);
+  updateCurrentUserSession({ onboardingCompleted: true });
+
+  // Persist to Laravel backend
+  try {
+    const payload = {
+      required_hours: Number(data.requiredHours) || 600,
+      hours_per_day: effectiveDailyHours,
+      start_date: data.startDate || null,
+      target_end_date: completion?.iso || null,
+      working_days: data.workingDays || [],
+      morning_enabled: Boolean(data.morningEnabled),
+      morning_start: toTimeString(data.morningTimeIn),
+      morning_end: toTimeString(data.morningTimeOut),
+      afternoon_enabled: Boolean(data.afternoonEnabled),
+      afternoon_start: toTimeString(data.afternoonTimeIn),
+      afternoon_end: toTimeString(data.afternoonTimeOut),
+      school_name: data.schoolName || null,
+      program: data.program || null,
+      year_level: data.yearLevel || null,
+      school_department: data.schoolDepartment || null,
+      company_name: data.companyName || null,
+      company_address: data.companyAddress || null,
+      company_department: data.companyDepartment || null,
+      supervisor_name: data.supervisorName || null,
+      supervisor_email: data.supervisorEmail || null,
+      internship_role: data.internshipRole || null,
+      onboarding_completed: true,
+      onboarding_step: 4,
+    };
+
+    const res = await apiClient.put('/api/student-profile', payload);
+    return { success: true, profile: res?.profile };
+  } catch (err) {
+    console.error('[onboardingService] Backend save error:', err);
+    return { success: true, offline: true, error: err.message };
   }
 }

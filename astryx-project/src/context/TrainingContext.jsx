@@ -10,6 +10,10 @@ import {
   getRecentRecords,
   createTrainingRecord,
   updateTrainingRecord,
+  fetchRemoteRecords,
+  persistRecordToBackend,
+  deleteRecordFromBackend,
+  flushOfflineSyncQueue,
 } from '../services/trainingService';
 import { loadOnboardingData } from '../services/onboardingService';
 import { getCurrentUser } from '../services/authService';
@@ -21,7 +25,7 @@ export function TrainingProvider({ children }) {
   const [records, setRecords] = useState(() => loadStoredRecords(currentUserId));
   const [requiredHours, setRequiredHoursState] = useState(() => {
     const onboarding = loadOnboardingData(currentUserId);
-    return Number(onboarding?.requiredHours) || REQUIRED_OJT_HOURS;
+    return Number(onboarding?.requiredHours) || Number(currentUser?.requiredHours) || REQUIRED_OJT_HOURS;
   });
 
   // Watch for session changes (login, logout, or account switch)
@@ -33,11 +37,10 @@ export function TrainingProvider({ children }) {
         const newId = activeUser?.id || null;
         setRecords(loadStoredRecords(newId));
         const onboarding = loadOnboardingData(newId);
-        setRequiredHoursState(Number(onboarding?.requiredHours) || REQUIRED_OJT_HOURS);
+        setRequiredHoursState(Number(onboarding?.requiredHours) || Number(activeUser?.requiredHours) || REQUIRED_OJT_HOURS);
       }
     };
 
-    // Check on storage event and on window focus
     window.addEventListener('storage', checkUser);
     window.addEventListener('focus', checkUser);
     return () => {
@@ -45,6 +48,28 @@ export function TrainingProvider({ children }) {
       window.removeEventListener('focus', checkUser);
     };
   }, [currentUser?.id]);
+
+  // Initial remote fetch & sync when user is authenticated
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        await flushOfflineSyncQueue(currentUserId);
+        const remote = await fetchRemoteRecords(currentUserId);
+        if (isMounted && remote && remote.length > 0) {
+          setRecords(remote);
+        }
+      } catch (err) {
+        console.warn('Initial sync or fetch failed; using cached records', err);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUserId]);
 
   // Persist records to the user-specific storage key whenever records change
   useEffect(() => {
@@ -78,16 +103,34 @@ export function TrainingProvider({ children }) {
       userId: currentUserId,
     });
     setRecords((prev) => [newRecord, ...prev]);
+
+    // Asynchronously persist to backend / sync queue
+    persistRecordToBackend(newRecord, true).catch((err) => {
+      console.warn('Failed to persist new record to backend', err);
+    });
+
     return newRecord;
   }, [currentUserId]);
 
   const updateRecord = useCallback((id, updatedFields) => {
-    setRecords((prev) => updateTrainingRecord(prev, id, updatedFields, currentUserId));
+    setRecords((prev) => {
+      const updatedList = updateTrainingRecord(prev, id, updatedFields, currentUserId);
+      const targetRecord = updatedList.find((r) => r.id === id);
+      if (targetRecord) {
+        persistRecordToBackend(targetRecord, false).catch((err) => {
+          console.warn('Failed to persist record update to backend', err);
+        });
+      }
+      return updatedList;
+    });
   }, [currentUserId]);
 
   const deleteRecord = useCallback((id) => {
     setRecords((prev) => prev.filter((r) => r.id !== id));
-  }, []);
+    deleteRecordFromBackend(id, currentUserId).catch((err) => {
+      console.warn('Failed to delete record on backend', err);
+    });
+  }, [currentUserId]);
 
   const clearAllRecords = useCallback(() => {
     setRecords([]);
