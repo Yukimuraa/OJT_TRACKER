@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class ForgotPasswordRequest extends FormRequest
 {
@@ -12,6 +13,18 @@ class ForgotPasswordRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('email')) {
+            $this->merge([
+                'email' => Str::lower(trim((string) $this->input('email'))),
+            ]);
+        }
     }
 
     /**

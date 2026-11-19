@@ -27,24 +27,22 @@ Route::get('/schools/{school}', [SchoolController::class, 'show'])->name('school
 Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
 Route::get('/companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
 
-// Guest Authentication Routes
-Route::middleware('guest')->group(function () {
-    Route::post('/register', [RegisteredUserController::class, 'store'])
-        ->middleware('throttle:10,1')
-        ->name('register');
+// Authentication Routes (Public / Guest)
+Route::post('/register', [RegisteredUserController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('register');
 
-    Route::post('/login', [AuthenticatedSessionController::class, 'store'])
-        ->middleware('throttle:10,1')
-        ->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('login');
 
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
-        ->middleware('throttle:5,1')
-        ->name('password.email');
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('password.email');
 
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])
-        ->middleware('throttle:5,1')
-        ->name('password.update');
-});
+Route::post('/reset-password', [NewPasswordController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('password.update');
 
 // Protected Application Routes (Sanctum SPA Cookie Auth)
 Route::middleware('auth:sanctum')->group(function () {

@@ -272,11 +272,29 @@ export async function logoutUser() {
  * Requests a password reset link email via POST /api/forgot-password.
  */
 export async function requestPasswordReset(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if (!normalizedEmail) {
+    return { success: false, error: 'Email address is required.' };
+  }
+
   try {
-    const res = await apiClient.post('/api/forgot-password', { email });
-    return { success: true, message: res?.message || 'Password reset link sent.' };
+    const res = await apiClient.post('/api/forgot-password', { email: normalizedEmail });
+    return {
+      success: true,
+      message:
+        res?.message ||
+        "We've received your request. If an account exists with this email address, you will receive a password reset link shortly. Please check your inbox.",
+    };
   } catch (err) {
-    return { success: false, error: err.message || 'Failed to send reset link.' };
+    const firstErrorMessage =
+      err.errors && Object.values(err.errors)[0]
+        ? Object.values(err.errors)[0][0]
+        : err.message || 'Failed to send reset link.';
+    return {
+      success: false,
+      error: firstErrorMessage,
+      errors: err.errors || {},
+    };
   }
 }
 
@@ -284,16 +302,43 @@ export async function requestPasswordReset(email) {
  * Resets user password via POST /api/reset-password.
  */
 export async function resetPassword({ token, email, password, password_confirmation }) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if (!token) {
+    return { success: false, error: 'Reset token is required.' };
+  }
+  if (!normalizedEmail) {
+    return { success: false, error: 'Email address is required.' };
+  }
+  if (!password) {
+    return { success: false, error: 'New password is required.' };
+  }
+  if (password !== password_confirmation) {
+    return { success: false, error: 'Passwords do not match.' };
+  }
+
   try {
     const res = await apiClient.post('/api/reset-password', {
       token,
-      email,
+      email: normalizedEmail,
       password,
       password_confirmation,
     });
-    return { success: true, message: res?.message || 'Password has been reset.' };
+    // Invalidate local session cache so the client state is cleanly prepared for the new login
+    clearSession();
+    return {
+      success: true,
+      message: res?.message || 'Your password has been successfully reset. You can now log in with your new password.',
+    };
   } catch (err) {
-    return { success: false, error: err.message || 'Failed to reset password.' };
+    const firstErrorMessage =
+      err.errors && Object.values(err.errors)[0]
+        ? Object.values(err.errors)[0][0]
+        : err.message || 'Failed to reset password.';
+    return {
+      success: false,
+      error: firstErrorMessage,
+      errors: err.errors || {},
+    };
   }
 }
 

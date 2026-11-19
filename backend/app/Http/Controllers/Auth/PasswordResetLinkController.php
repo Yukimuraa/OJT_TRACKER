@@ -16,21 +16,16 @@ class PasswordResetLinkController extends Controller
     {
         $status = Password::sendResetLink($request->only('email'));
 
-        if ($status === Password::RESET_LINK_SENT) {
-            return response()->json([
-                'message' => __($status),
-            ]);
-        }
-
         if ($status === Password::RESET_THROTTLED) {
             return response()->json([
                 'message' => __($status),
             ], 429);
         }
 
-        // Return a generic response to prevent account enumeration if user does not exist
+        // Return a generic response for both successful sends and non-existent accounts
+        // to prevent account enumeration attack vectors
         return response()->json([
-            'message' => 'If an account exists with that email address, a password reset link has been sent.',
+            'message' => "We've received your request. If an account exists with this email address, you will receive a password reset link shortly. Please check your inbox.",
         ]);
     }
 }

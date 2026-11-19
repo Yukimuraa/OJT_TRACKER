@@ -20,6 +20,18 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('email')) {
+            $this->merge([
+                'email' => Str::lower(trim((string) $this->input('email'))),
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -42,10 +54,13 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $credentials = $this->only('email', 'password');
+        $credentials = [
+            'email' => Str::lower(trim((string) $this->input('email'))),
+            'password' => (string) $this->input('password'),
+        ];
         $remember = $this->boolean('remember');
 
-        if (! Auth::attempt($credentials, $remember)) {
+        if (! Auth::guard('web')->attempt($credentials, $remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

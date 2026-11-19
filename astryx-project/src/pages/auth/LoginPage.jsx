@@ -18,7 +18,18 @@ import { loginUser } from '../../services/authService';
 const CURRENT_YEAR = new Date().getFullYear();
 
 export function LoginPage({ onNavigate }) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const prefill = sessionStorage.getItem('ojt_prefill_email');
+        if (prefill) {
+          sessionStorage.removeItem('ojt_prefill_email');
+          return prefill;
+        }
+      } catch {}
+    }
+    return '';
+  });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -67,12 +78,23 @@ export function LoginPage({ onNavigate }) {
         result.user?.studentProfile?.onboarding_completed
       );
 
+      let savedStep = Number(
+        result.user?.onboardingStep ??
+        result.user?.studentProfile?.onboarding_step ??
+        0
+      );
+
       try {
         const remoteProfile = await fetchStudentProfile();
         if (remoteProfile?.onboardingCompleted) {
           isCompleted = true;
-        } else if (!isCompleted) {
-          isCompleted = isOnboardingCompleted(result.user?.id);
+        } else {
+          if (typeof remoteProfile?.onboardingStep === 'number') {
+            savedStep = remoteProfile.onboardingStep;
+          }
+          if (!isCompleted) {
+            isCompleted = isOnboardingCompleted(result.user?.id);
+          }
         }
       } catch (err) {
         console.warn('Backend profile fetch failed after login, falling back to local state:', err);
@@ -81,8 +103,14 @@ export function LoginPage({ onNavigate }) {
         }
       }
 
-      const destination = isCompleted ? 'dashboard' : 'onboarding';
-      onNavigate?.(destination);
+      if (isCompleted) {
+        onNavigate?.('dashboard');
+      } else {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('ojt_resume_onboarding_step', String(savedStep < 4 ? savedStep : 0));
+        }
+        onNavigate?.('onboarding');
+      }
     } catch {
       setIsSubmitting(false);
       setErrors({ general: 'An unexpected authentication error occurred. Please try again.' });
@@ -193,6 +221,31 @@ export function LoginPage({ onNavigate }) {
                     onClick={() => setShowPassword(!showPassword)}
                   />
                 </InputGroup>
+
+                <HStack justify="end">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('forgot-password')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#10b981',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.textDecoration = 'underline';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.textDecoration = 'none';
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
+                </HStack>
 
                 <Button
                   label="Log In"

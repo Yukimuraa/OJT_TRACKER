@@ -29,9 +29,25 @@ import {
   calculateEstimatedCompletionDate,
 } from '../../services/onboardingService';
 
-export function OnboardingWizard({ onComplete }) {
-  const [activeStep, setActiveStep] = useState(0);
-  const [data, setData] = useState(() => loadOnboardingData());
+export function OnboardingWizard({ onComplete, initialStep = null, initialData = null }) {
+  const [activeStep, setActiveStep] = useState(() => {
+    if (typeof initialStep === 'number' && initialStep >= 0 && initialStep < 4) {
+      return initialStep;
+    }
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+      const storedStep = sessionStorage.getItem('ojt_resume_onboarding_step');
+      if (storedStep !== null && !isNaN(Number(storedStep))) {
+        const stepNum = Number(storedStep);
+        if (stepNum >= 0 && stepNum < 4) return stepNum;
+      }
+    }
+    return 0;
+  });
+
+  const [data, setData] = useState(() => {
+    if (initialData) return initialData;
+    return loadOnboardingData();
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,7 +63,7 @@ export function OnboardingWizard({ onComplete }) {
             onComplete?.(remote);
             return;
           }
-          if (remote.onboardingStep && remote.onboardingStep > 0 && remote.onboardingStep < 4) {
+          if (typeof remote.onboardingStep === 'number' && remote.onboardingStep >= 0 && remote.onboardingStep < 4) {
             setActiveStep(remote.onboardingStep);
           }
         }
@@ -209,13 +225,22 @@ export function OnboardingWizard({ onComplete }) {
     }
 
     setIsSubmitting(true);
+    setErrors({});
     try {
-      await completeOnboarding(data);
-    } catch (err) {
-      console.warn('Onboarding completion error:', err);
-    } finally {
+      const result = await completeOnboarding(data);
+      if (!result.success) {
+        setErrors({ general: result.error || 'Failed to complete setup on server. Please try again.' });
+        setIsSubmitting(false);
+        return;
+      }
       setIsSubmitting(false);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('ojt_resume_onboarding_step');
+      }
       onComplete?.(data);
+    } catch (err) {
+      setIsSubmitting(false);
+      setErrors({ general: err.message || 'An unexpected error occurred while saving your profile.' });
     }
   };
 
@@ -268,6 +293,13 @@ export function OnboardingWizard({ onComplete }) {
                 <Step step={3} label="Company" description="Host training placement" />
               </Stepper>
             </Card>
+
+            {errors.general && (
+              <Banner
+                status="error"
+                title={errors.general}
+              />
+            )}
 
             {/* Step 1: Training Requirements */}
             {activeStep === 0 && (

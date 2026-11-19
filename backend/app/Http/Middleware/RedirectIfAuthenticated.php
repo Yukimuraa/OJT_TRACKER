@@ -21,8 +21,13 @@ class RedirectIfAuthenticated
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
                 if ($request->expectsJson() || $request->is('api/*')) {
-                    // For SPA login/register, allow re-authenticating seamlessly without redirect
-                    if ($request->is('api/login') || $request->is('api/register')) {
+                    // For SPA authentication endpoints, allow access even if an existing session cookie is present
+                    if (
+                        $request->is('api/login') ||
+                        $request->is('api/register') ||
+                        $request->is('api/forgot-password') ||
+                        $request->is('api/reset-password')
+                    ) {
                         return $next($request);
                     }
 

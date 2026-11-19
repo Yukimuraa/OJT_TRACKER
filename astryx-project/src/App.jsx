@@ -14,8 +14,10 @@ import { Settings } from './pages/Settings';
 import { LandingPage } from './pages/landing/LandingPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { OnboardingWizard } from './pages/onboarding/OnboardingWizard';
-import { isAuthenticated, getCurrentUser } from './services/authService';
+import { isAuthenticated, getCurrentUser, fetchCurrentUser } from './services/authService';
 import { restartReminderScheduler } from './services/reminderService';
 import { fetchStudentProfile } from './services/profileService';
 import { isOnboardingCompleted } from './services/onboardingService';
@@ -36,6 +38,8 @@ function getInitialPage() {
     const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
     if (path === '/register') return 'register';
     if (path === '/login') return 'login';
+    if (path === '/forgot-password') return 'forgot-password';
+    if (path === '/reset-password') return 'reset-password';
 
     const authed = isAuthenticated();
     if (!authed && (path.startsWith('/app') || path === '/dashboard' || path === '/onboarding' || path === '/timelogs')) {
@@ -76,19 +80,35 @@ export function App() {
     }
   }, [activePage]);
 
-  // Restore student profile & onboarding state from backend on mount
+  // Restore student profile & onboarding state from backend on mount and page change
   useEffect(() => {
     if (isAuthenticated()) {
       fetchStudentProfile().then((profile) => {
-        if (profile?.onboardingCompleted && window.location.pathname.toLowerCase() === '/onboarding') {
+        if (profile?.onboardingCompleted && (activePage === 'onboarding' || window.location.pathname.toLowerCase() === '/onboarding')) {
           setActivePage('dashboard');
           if (typeof window !== 'undefined') {
             window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
           }
         }
       }).catch(() => {});
+    } else {
+      // In case session cookie exists in browser/PWA but local storage was cleared
+      fetchCurrentUser().then((user) => {
+        if (user) {
+          fetchStudentProfile().then((profile) => {
+            const isCompleted = Boolean(profile?.onboardingCompleted ?? user.onboardingCompleted);
+            const targetPage = isCompleted ? 'dashboard' : 'onboarding';
+            if (activePage === 'login' || activePage === 'landing') {
+              setActivePage(targetPage);
+              if (typeof window !== 'undefined') {
+                window.history.replaceState({ page: targetPage }, '', `/${targetPage}`);
+              }
+            }
+          }).catch(() => {});
+        }
+      }).catch(() => {});
     }
-  }, []);
+  }, [activePage]);
 
   const navigateTo = (page) => {
     // Route guard: Prevent unauthenticated users from accessing protected pages
@@ -105,6 +125,8 @@ export function App() {
       let targetPath = '/';
       if (page === 'register') targetPath = '/register';
       else if (page === 'login') targetPath = '/login';
+      else if (page === 'forgot-password') targetPath = '/forgot-password';
+      else if (page === 'reset-password') targetPath = '/reset-password';
       else if (page === 'onboarding') targetPath = '/onboarding';
       else if (page !== 'landing') targetPath = `/app/${page}`;
 
@@ -140,6 +162,24 @@ export function App() {
       <Theme theme={themes[defaultThemeSlug]} mode="light">
         <PwaStatusBanners />
         <LoginPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'forgot-password') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <ForgotPasswordPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'reset-password') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <ResetPasswordPage onNavigate={navigateTo} />
       </Theme>
     );
   }

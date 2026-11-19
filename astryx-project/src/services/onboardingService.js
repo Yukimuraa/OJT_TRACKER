@@ -546,9 +546,21 @@ export async function completeOnboarding(data, userId = null) {
     };
 
     const res = await apiClient.put('/api/student-profile', payload);
-    return { success: true, profile: res?.profile };
+    const profile = res?.profile;
+    if (profile?.onboarding_completed || profile) {
+      updateCurrentUserSession({ onboardingCompleted: true });
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(statusKey, 'true');
+      }
+      return { success: true, profile };
+    }
+    return { success: false, error: 'Server did not confirm onboarding completion.' };
   } catch (err) {
     console.error('[onboardingService] Backend save error:', err);
-    return { success: true, offline: true, error: err.message };
+    const errorMsg =
+      err.errors && Object.values(err.errors)[0]
+        ? Object.values(err.errors)[0][0]
+        : err.message || 'Failed to save onboarding profile to server.';
+    return { success: false, error: errorMsg };
   }
 }
