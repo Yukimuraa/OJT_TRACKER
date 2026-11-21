@@ -33,6 +33,7 @@ import {
   addUserTemplate,
   updateUserTemplate,
   readPdfFile,
+  ensureTemplateDataUrl,
 } from '../../services/dttrTemplateService';
 import { generatePopulatedDttrPdf } from '../../services/dttrPdfGenerator';
 
@@ -103,6 +104,7 @@ function getHeaderInfo(userId, currentUser) {
 function UploadContent({ userId, onSaved, onBack, onOpenChange }) {
   const fileRef = useRef(null);
   const [pdfData, setPdfData] = useState(null); // { dataUrl, fileSizeKb }
+  const [rawFile, setRawFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [templateName, setTemplateName] = useState('');
   const [fieldMap, setFieldMap] = useState({});
@@ -117,6 +119,7 @@ function UploadContent({ userId, onSaved, onBack, onOpenChange }) {
     try {
       const result = await readPdfFile(file);
       setPdfData(result);
+      setRawFile(file);
       setFileName(file.name);
       setTemplateName(file.name.replace(/\.pdf$/i, ''));
       setStep('preview');
@@ -125,21 +128,22 @@ function UploadContent({ userId, onSaved, onBack, onOpenChange }) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!templateName.trim()) { setError('Please enter a template name.'); return; }
     if (!pdfData?.dataUrl) { setError('No PDF file loaded.'); return; }
     setSaving(true);
     try {
-      addUserTemplate({
+      await addUserTemplate({
         name: templateName.trim(),
         fileName,
+        file: rawFile,
         dataUrl: pdfData.dataUrl,
         fileSizeKb: pdfData.fileSizeKb,
         fieldMap,
       }, userId);
       onSaved();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to save template.');
       setSaving(false);
     }
   };
@@ -322,7 +326,18 @@ function UploadContent({ userId, onSaved, onBack, onOpenChange }) {
 
 /* ── Generate / print step (custom template) ─────────────────────────────── */
 function GenerateContent({ userId, currentUser, records, template, onBack, onOpenChange }) {
-  const isCustomTemplate = !template?.isSystem;
+  const [activeTemplate, setActiveTemplate] = useState(template);
+
+  useEffect(() => {
+    setActiveTemplate(template);
+    if (template && !template.dataUrl) {
+      ensureTemplateDataUrl(template, userId).then((dataUrl) => {
+        if (dataUrl) setActiveTemplate((prev) => ({ ...prev, dataUrl }));
+      });
+    }
+  }, [template, userId]);
+
+  const isCustomTemplate = !activeTemplate?.isSystem;
   const [selectedYear, setSelectedYear] = useState(() => String(DEFAULT_YEAR));
   const [selectedMonth, setSelectedMonth] = useState(() => String(DEFAULT_MONTH));
   const [showSettings, setShowSettings] = useState(false);
@@ -331,7 +346,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
   const [zoomPercent, setZoomPercent] = useState(100);
   const [headerInfo, setHeaderInfo] = useState(() => getHeaderInfo(userId, currentUser));
   const [draftInfo, setDraftInfo] = useState(headerInfo);
-  const [fieldMap, setFieldMap] = useState(() => template.fieldMap || {});
+  const [fieldMap, setFieldMap] = useState(() => template?.fieldMap || {});
   const [feedback, setFeedback] = useState(null);
   const [populatedPdfUrl, setPopulatedPdfUrl] = useState(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -400,12 +415,12 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
     let currentObjectUrl = null;
 
     async function generate() {
-      if (!template?.dataUrl) return;
+      if (!activeTemplate?.dataUrl) return;
       setIsGeneratingPdf(true);
       setPdfGenError(null);
       try {
         const pdfBytes = await generatePopulatedDttrPdf({
-          templatePdfDataUrl: template.dataUrl,
+          templatePdfDataUrl: activeTemplate.dataUrl,
           headerInfo,
           monthRows,
           totalHours,
@@ -438,11 +453,11 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
         URL.revokeObjectURL(currentObjectUrl);
       }
     };
-  }, [template?.dataUrl, headerInfo, monthRows, totalHours, monthName, selectedYear, fieldMap]);
+  }, [activeTemplate?.dataUrl, headerInfo, monthRows, totalHours, monthName, selectedYear, fieldMap]);
 
   const handleDownloadPdf = () => {
     const isOriginal = activeTab === 'original';
-    const url = isOriginal ? template?.dataUrl : (populatedPdfUrl || template?.dataUrl);
+    const url = isOriginal ? activeTemplate?.dataUrl : (populatedPdfUrl || activeTemplate?.dataUrl);
     if (!url) return;
     const studentSlug = (headerInfo.studentName || 'Student').trim().replace(/[^a-zA-Z0-9_-]+/g, '_');
     const safeMonth = (monthName || 'Month').trim();
@@ -464,7 +479,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
       return;
     }
 
-    const targetPdfUrl = activeTab === 'original' ? template?.dataUrl : (populatedPdfUrl || template?.dataUrl);
+    const targetPdfUrl = activeTab === 'original' ? activeTemplate?.dataUrl : (populatedPdfUrl || activeTemplate?.dataUrl);
     if (!targetPdfUrl) {
       window.print();
       return;
@@ -488,14 +503,14 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
     window.print();
   };
 
-  const handleSaveFieldMap = () => {
+  const handleSaveFieldMap = async () => {
     try {
-      updateUserTemplate(template.id, { fieldMap }, userId);
+      await updateUserTemplate(activeTemplate.id, { fieldMap }, userId);
       setShowMapping(false);
       setFeedback({ type: 'success', message: 'Field mapping saved successfully.' });
       setTimeout(() => setFeedback(null), 2500);
     } catch (err) {
-      setFeedback({ type: 'error', message: err.message });
+      setFeedback({ type: 'error', message: err.message || 'Failed to save field mapping.' });
     }
   };
 
@@ -515,7 +530,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
     <>
       <div className="no-print">
         <DialogHeader
-          title={`Generate Report — ${template.name}`}
+          title={`Generate Report — ${activeTemplate?.name || template?.name || 'Template'}`}
           subtitle="Populate your training records onto this template and print or save as PDF."
           onOpenChange={onOpenChange}
         />
@@ -878,7 +893,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
                 }}
               >
                 <CleanPdfViewer
-                  pdfData={activeTab === 'original' ? template.dataUrl : (populatedPdfUrl || template.dataUrl)}
+                  pdfData={activeTab === 'original' ? activeTemplate?.dataUrl : (populatedPdfUrl || activeTemplate?.dataUrl)}
                   zoomPercent={zoomPercent}
                 />
               </div>
@@ -903,7 +918,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
             {/* Header info with template label */}
             <div style={{ textAlign: 'center', marginBottom: 12 }}>
               <div style={{ fontSize: '10pt', fontWeight: 'bold', color: '#10b981', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>
-                {template.name}
+                {activeTemplate?.name || template?.name}
               </div>
               <h1 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 4px 0', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                 DAILY TIME &amp; TASKS RECORD (DTTR)
@@ -1092,7 +1107,7 @@ function GenerateContent({ userId, currentUser, records, template, onBack, onOpe
       {isCustomTemplate && printPortalEl && ReactDOM.createPortal(
         <div id="dttr-printable-custom-pdf" style={{ width: '100%', margin: 0, padding: 0 }}>
           <CleanPdfViewer
-            pdfData={activeTab === 'original' ? template.dataUrl : (populatedPdfUrl || template.dataUrl)}
+            pdfData={activeTab === 'original' ? activeTemplate?.dataUrl : (populatedPdfUrl || activeTemplate?.dataUrl)}
             zoomPercent={100}
             targetDpi={300}
             id="dttr-portal-clean-pdf"

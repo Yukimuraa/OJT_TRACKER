@@ -17,11 +17,17 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { OnboardingWizard } from './pages/onboarding/OnboardingWizard';
+import { PrivacyPolicyPage } from './pages/legal/PrivacyPolicyPage';
+import { TermsOfServicePage } from './pages/legal/TermsOfServicePage';
+import { AboutPage } from './pages/about/AboutPage';
+import { HelpSupportPage } from './pages/support/HelpSupportPage';
 import { isAuthenticated, getCurrentUser, fetchCurrentUser } from './services/authService';
 import { restartReminderScheduler } from './services/reminderService';
 import { fetchStudentProfile } from './services/profileService';
 import { isOnboardingCompleted } from './services/onboardingService';
 import { PwaStatusBanners } from './components/pwa/PwaStatusBanners';
+import { useDarkMode } from './hooks/useDarkMode';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
@@ -40,6 +46,10 @@ function getInitialPage() {
     if (path === '/login') return 'login';
     if (path === '/forgot-password') return 'forgot-password';
     if (path === '/reset-password') return 'reset-password';
+    if (path === '/privacy' || path === '/privacy-policy') return 'privacy';
+    if (path === '/terms' || path === '/terms-of-service') return 'terms';
+    if (path === '/about') return 'about';
+    if (path === '/help' || path === '/faq') return 'help';
 
     const authed = isAuthenticated();
     if (!authed && (path.startsWith('/app') || path === '/dashboard' || path === '/onboarding' || path === '/timelogs')) {
@@ -59,7 +69,16 @@ function getInitialPage() {
 }
 
 export function App() {
+  const { isDarkMode } = useDarkMode();
   const [activePage, setActivePage] = useState(getInitialPage);
+  const [openAddOnTimeLogs, setOpenAddOnTimeLogs] = useState(false);
+
+  const handleOpenAddLog = () => {
+    setOpenAddOnTimeLogs(true);
+    if (activePage !== 'timelogs') {
+      navigateTo('timelogs');
+    }
+  };
 
   // Sync with browser back/forward history
   useEffect(() => {
@@ -128,6 +147,10 @@ export function App() {
       else if (page === 'forgot-password') targetPath = '/forgot-password';
       else if (page === 'reset-password') targetPath = '/reset-password';
       else if (page === 'onboarding') targetPath = '/onboarding';
+      else if (page === 'privacy') targetPath = '/privacy';
+      else if (page === 'terms') targetPath = '/terms';
+      else if (page === 'about') targetPath = '/about';
+      else if (page === 'help' || page === 'faq') targetPath = '/help';
       else if (page !== 'landing') targetPath = `/app/${page}`;
 
       if (window.location.pathname !== targetPath) {
@@ -199,12 +222,54 @@ export function App() {
     );
   }
 
+  if (activePage === 'privacy') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <PrivacyPolicyPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'terms') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <TermsOfServicePage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'about') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <AboutPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'help' || activePage === 'faq') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <HelpSupportPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
   const renderActivePage = () => {
     switch (activePage) {
       case 'dashboard':
         return <Dashboard onNavigate={navigateTo} />;
       case 'timelogs':
-        return <TimeLogs onNavigate={navigateTo} />;
+        return (
+          <TimeLogs
+            onNavigate={navigateTo}
+            openAddModal={openAddOnTimeLogs}
+            onAddModalHandled={() => setOpenAddOnTimeLogs(false)}
+          />
+        );
       case 'reports':
         return <Reports onNavigate={navigateTo} />;
       case 'profile':
@@ -217,7 +282,7 @@ export function App() {
   };
 
   return (
-    <Theme theme={themes[defaultThemeSlug]} mode="light">
+    <Theme theme={themes[defaultThemeSlug]} mode={isDarkMode ? 'dark' : 'light'}>
       <TrainingProvider>
         <AppShell
           variant="elevated"
@@ -234,9 +299,15 @@ export function App() {
         >
           <PwaStatusBanners />
           <div className="ojt-authenticated-content">
-            {renderActivePage()}
+            <ErrorBoundary onReset={() => setActivePage('dashboard')}>
+              {renderActivePage()}
+            </ErrorBoundary>
           </div>
-          <MobileBottomNav activePage={activePage} onNavigate={navigateTo} />
+          <MobileBottomNav
+            activePage={activePage}
+            onNavigate={navigateTo}
+            onAddLog={handleOpenAddLog}
+          />
         </AppShell>
       </TrainingProvider>
     </Theme>

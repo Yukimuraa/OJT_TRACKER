@@ -13,6 +13,7 @@ import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Icon } from '@astryxdesign/core/Icon';
 import { Divider } from '@astryxdesign/core/Divider';
 import { useTraining } from '../hooks/useTraining';
+import { SummaryCard } from '../components/dashboard/SummaryCard';
 import {
   calculateHoursByCategory,
   calculateTrainingAnalytics,
@@ -78,78 +79,48 @@ export function Reports({ onNavigate }) {
           />
         </Card>
       ) : (
-        <VStack gap={6}>
-          {/* Top Analytics Cards */}
-          <Grid columns={{ minWidth: 200, max: 4 }} gap={3}>
-            <Card elevation="low" padding={4}>
-              <VStack gap={2}>
-                <HStack justify="between" align="center">
-                  <Text size="sm" color="secondary" weight="medium">
-                    Total Completed
-                  </Text>
-                  <Icon icon={CheckCircleIcon} size="sm" color="accent" />
-                </HStack>
-                <Heading level={2}>{analytics.completed} hrs</Heading>
-                <Text size="sm" type="supporting" color="secondary">
-                  Target: {requiredHours} hrs ({analytics.rate}%)
-                </Text>
-              </VStack>
-            </Card>
+        <VStack gap={4}>
+          {/* Top Analytics Cards - 2x2 grid on mobile, 4-column on desktop */}
+          <div className="ojt-reports-summary-grid">
+            <SummaryCard
+              title="Total Completed"
+              value={`${analytics.completed} hrs`}
+              description={`Target: ${requiredHours} hrs (${analytics.rate}%)`}
+              icon={<Icon icon={CheckCircleIcon} size="sm" color="accent" />}
+            />
 
-            <Card elevation="low" padding={4}>
-              <VStack gap={2}>
-                <HStack justify="between" align="center">
-                  <Text size="sm" color="secondary" weight="medium">
-                    Days Rendered
-                  </Text>
-                  <Icon icon="calendar" size="sm" color="accent" />
-                </HStack>
-                <Heading level={2}>{analytics.daysRendered} days</Heading>
-                <Text size="sm" type="supporting" color="secondary">
-                  Distinct training sessions
-                </Text>
-              </VStack>
-            </Card>
+            <SummaryCard
+              title="Days Rendered"
+              value={`${analytics.daysRendered} days`}
+              description="Distinct training sessions"
+              icon={<Icon icon="calendar" size="sm" color="accent" />}
+            />
 
-            <Card elevation="low" padding={4}>
-              <VStack gap={2}>
-                <HStack justify="between" align="center">
-                  <Text size="sm" color="secondary" weight="medium">
-                    Average Pace
-                  </Text>
-                  <Icon icon={TrendingUpIcon} size="sm" color="accent" />
-                </HStack>
-                <Heading level={2}>{analytics.avgHoursPerDay} hrs</Heading>
-                <Text size="sm" type="supporting" color="secondary">
-                  Per logged training day
-                </Text>
-              </VStack>
-            </Card>
+            <SummaryCard
+              title="Average Pace"
+              value={`${analytics.avgHoursPerDay} hrs`}
+              description="Per logged training day"
+              icon={<Icon icon={TrendingUpIcon} size="sm" color="accent" />}
+            />
 
-            <Card elevation="low" padding={4}>
-              <VStack gap={2}>
-                <HStack justify="between" align="center">
-                  <Text size="sm" color="secondary" weight="medium">
-                    Estimated Pace
-                  </Text>
-                  <Icon icon={HourglassIcon} size="sm" color="accent" />
-                </HStack>
-                <Heading level={2}>
-                  {analytics.estimatedDaysLeft != null
-                    ? `${analytics.estimatedDaysLeft} days`
-                    : '—'}
-                </Heading>
-                <Text size="sm" type="supporting" color="secondary">
-                  {analytics.remaining > 0
-                    ? `${analytics.remaining} hrs remaining`
-                    : 'Target completed!'}
-                </Text>
-              </VStack>
-            </Card>
-          </Grid>
+            <SummaryCard
+              title="Estimated Pace"
+              value={
+                analytics.estimatedDaysLeft != null
+                  ? `${analytics.estimatedDaysLeft} days`
+                  : '—'
+              }
+              description={
+                analytics.remaining > 0
+                  ? `${analytics.remaining} hrs remaining`
+                  : 'Target completed!'
+              }
+              icon={<Icon icon={HourglassIcon} size="sm" color="accent" />}
+            />
+          </div>
 
           {/* Milestone Tracking Card */}
-          <Card elevation="low" padding={5}>
+          <Card elevation="low" padding={4}>
             <VStack gap={4}>
               <VStack gap={0.5}>
                 <Heading level={2}>Requirement Milestones</Heading>
@@ -171,7 +142,7 @@ export function Reports({ onNavigate }) {
 
               <Divider variant="subtle" />
 
-              <Grid columns={{ minWidth: 200, max: 4 }} gap={3}>
+              <Grid columns={{ minWidth: 140, max: 4 }} gap={3}>
                 {milestones.map((m) => (
                   <Card
                     key={m.label}
@@ -202,7 +173,7 @@ export function Reports({ onNavigate }) {
           </Card>
 
           {/* Hours by Activity Category Table */}
-          <Card elevation="low" padding={5}>
+          <Card elevation="low" padding={4}>
             <VStack gap={4}>
               <VStack gap={0.5}>
                 <Heading level={2}>Hours by Activity Category</Heading>
@@ -213,18 +184,22 @@ export function Reports({ onNavigate }) {
 
               {/* Desktop & Tablet Table View */}
               <div
-                className="ojt-desktop-only"
+                className="ojt-desktop-only ojt-table-scroll-wrapper"
                 style={{
                   width: '100%',
-                  overflow: 'hidden',
+                  maxWidth: '100%',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
                   borderRadius: 12,
                   border: '1px solid #e2e8f0',
                   backgroundColor: '#ffffff',
+                  boxSizing: 'border-box',
                 }}
               >
                 <table
                   style={{
                     width: '100%',
+                    minWidth: 480,
                     borderCollapse: 'collapse',
                     textAlign: 'left',
                     tableLayout: 'fixed',
@@ -379,6 +354,9 @@ export function Reports({ onNavigate }) {
                   flexDirection: 'column',
                   gap: 10,
                   width: '100%',
+                  maxWidth: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 {categoryBreakdown.map((row) => (
@@ -392,6 +370,10 @@ export function Reports({ onNavigate }) {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 10,
+                      width: '100%',
+                      maxWidth: '100%',
+                      minWidth: 0,
+                      boxSizing: 'border-box',
                     }}
                   >
                     <div

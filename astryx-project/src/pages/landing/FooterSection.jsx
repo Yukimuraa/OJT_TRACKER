@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
-import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
-import { Button } from '@astryxdesign/core/Button';
+import React from 'react';
 import { GraduationCapIcon } from '../../components/common/BrandIcons';
+import { APP_CONFIG } from '../../config/appConfig';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-export function FooterSection({ onRegister, onLogin }) {
-  const [modalContent, setModalContent] = useState(null); // 'terms' | 'privacy' | 'contact' | null
-
+export function FooterSection({ onRegister, onLogin, onNavigate }) {
   const handleScroll = (id) => (e) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -22,384 +19,344 @@ export function FooterSection({ onRegister, onLogin }) {
     }
   };
 
+  const handleLink = (page) => (e) => {
+    e.preventDefault();
+    if (onNavigate) {
+      onNavigate(page);
+    }
+  };
+
   return (
-    <>
-      <footer
-        style={{
-          backgroundColor: '#FCFCFB',
-          borderTop: '1px solid #e5e7eb',
-          padding: 'clamp(40px, 6vw, 64px) 0 32px 0',
-        }}
-      >
-        <div className="ojt-landing-container">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 40,
-              paddingBottom: 40,
-              borderBottom: '1px solid #f1f5f9',
-            }}
-          >
-            {/* Column 1: Brand Info */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#10b981',
-                  }}
-                >
-                  <GraduationCapIcon style={{ width: 20, height: 20 }} />
-                </div>
-                <span
-                  style={{
-                    fontSize: '1.15rem',
-                    fontWeight: 800,
-                    color: '#142b49',
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  OJT Hours Tracker
-                </span>
-              </div>
-
-              <p
+    <footer
+      style={{
+        backgroundColor: '#FCFCFB',
+        borderTop: '1px solid #e5e7eb',
+        padding: 'clamp(40px, 6vw, 64px) 0 32px 0',
+      }}
+    >
+      <div className="ojt-landing-container">
+        {/* Main Footer Grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 36,
+            paddingBottom: 40,
+            borderBottom: '1px solid #f1f5f9',
+          }}
+        >
+          {/* Brand Info Column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, gridColumn: 'span 2' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
                 style={{
-                  fontSize: '0.875rem',
-                  color: '#64748b',
-                  lineHeight: 1.6,
-                  margin: 0,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#10b981',
                 }}
               >
-                A modern Progressive Web Application designed specifically for Filipino student
-                interns to record daily attendance, monitor hours rendered, and export official
-                college DTTR reports.
-              </p>
-            </div>
-
-            {/* Column 2: Navigation */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <GraduationCapIcon style={{ width: 20, height: 20 }} />
+              </div>
               <span
                 style={{
-                  fontSize: '0.8125rem',
+                  fontSize: '1.15rem',
                   fontWeight: 800,
                   color: '#142b49',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '-0.02em',
                 }}
               >
-                Navigation
+                {APP_CONFIG.name}
               </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <a
-                  href="#home"
-                  onClick={handleScroll('home')}
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  Home
-                </a>
-                <a
-                  href="#features"
-                  onClick={handleScroll('features')}
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  Features &amp; Toolkit
-                </a>
-                <a
-                  href="#how-it-works"
-                  onClick={handleScroll('how-it-works')}
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  How It Works
-                </a>
-                <a
-                  href="#product-preview"
-                  onClick={handleScroll('product-preview')}
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  Interactive Preview
-                </a>
-              </div>
             </div>
 
-            {/* Column 3: Student Tools & Account */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <span
-                style={{
-                  fontSize: '0.8125rem',
-                  fontWeight: 800,
-                  color: '#142b49',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                Student Access
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <a
-                  href="#login"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onLogin?.();
-                  }}
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  Student Login
-                </a>
-                <a
-                  href="#register"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onRegister?.();
-                  }}
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
-                >
-                  Create Free Account
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setModalContent('contact')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    textAlign: 'left',
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Support &amp; Feedback
-                </button>
-              </div>
-            </div>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                color: '#64748b',
+                lineHeight: 1.6,
+                margin: 0,
+                maxWidth: 380,
+              }}
+            >
+              A modern Progressive Web Application designed specifically for Filipino student
+              interns to record daily attendance, monitor hours rendered, and export official
+              college DTTR reports.
+            </p>
 
-            {/* Column 4: Legal & Guidelines */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <span
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={onLogin}
                 style={{
+                  padding: '6px 14px',
                   fontSize: '0.8125rem',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   color: '#142b49',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
+                  backgroundColor: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: 8,
+                  cursor: 'pointer',
                 }}
               >
-                Trust &amp; Legal
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setModalContent('privacy')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    textAlign: 'left',
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Privacy Policy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModalContent('terms')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    textAlign: 'left',
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Terms of Service
-                </button>
-              </div>
+                Student Login
+              </button>
+              <button
+                type="button"
+                onClick={onRegister}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  backgroundColor: '#10b981',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
+              >
+                Create Account
+              </button>
             </div>
           </div>
 
-          {/* Bottom Copyright & Status */}
-          <div
-            style={{
-              paddingTop: 24,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 16,
-              fontSize: '0.8125rem',
-              color: '#94a3b8',
-            }}
-          >
-            <span>
-              &copy; {CURRENT_YEAR} OJT Hours Tracker. Built with care for student interns.
+          {/* 1. Product Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 800,
+                color: '#142b49',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Product
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#10b981' }} />
-              <span style={{ color: '#64748b', fontWeight: 600 }}>All Systems Operational</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="#login"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onLogin?.();
+                }}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                  fontWeight: 600,
+                }}
+              >
+                Student Login
+              </a>
+              <a
+                href="#register"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onRegister?.();
+                }}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Create Account
+              </a>
+              <a
+                href="#features"
+                onClick={handleScroll('features')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Features
+              </a>
+              <a
+                href="#how-it-works"
+                onClick={handleScroll('how-it-works')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                How It Works
+              </a>
+            </div>
+          </div>
+
+          {/* 2. Legal Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 800,
+                color: '#142b49',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Legal
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="/privacy"
+                onClick={handleLink('privacy')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Privacy Policy
+              </a>
+              <a
+                href="/terms"
+                onClick={handleLink('terms')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Terms of Service
+              </a>
+            </div>
+          </div>
+
+          {/* 3. About Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 800,
+                color: '#142b49',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              About
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="/about"
+                onClick={handleLink('about')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                About {APP_CONFIG.shortName}
+              </a>
+              <a
+                href="/help"
+                onClick={handleLink('help')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Contact
+              </a>
+            </div>
+          </div>
+
+          {/* 4. Support Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 800,
+                color: '#142b49',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Support
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="/help"
+                onClick={handleLink('help')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Help &amp; Support
+              </a>
+              <a
+                href="/faq"
+                onClick={handleLink('help')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                FAQ
+              </a>
             </div>
           </div>
         </div>
-      </footer>
 
-      {/* Policy & Support Modal */}
-      {modalContent && (
-        <Dialog
-          isOpen={Boolean(modalContent)}
-          onOpenChange={(open) => {
-            if (!open) setModalContent(null);
+        {/* Bottom Bar: Copyright & Subtle Version */}
+        <div
+          style={{
+            paddingTop: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 16,
+            fontSize: '0.8125rem',
+            color: '#94a3b8',
           }}
-          purpose="info"
-          width={560}
-          maxHeight="85dvh"
         >
-          <DialogHeader
-            title={
-              modalContent === 'terms'
-                ? 'Terms of Service'
-                : modalContent === 'privacy'
-                ? 'Privacy Policy'
-                : 'Contact & Support'
-            }
-            subtitle={
-              modalContent === 'contact'
-                ? 'Get assistance with your OJT Hours Tracker account or DTTR templates.'
-                : 'Important guidelines for student account usage and data security.'
-            }
-            onOpenChange={(open) => {
-              if (!open) setModalContent(null);
-            }}
-          />
-
-          <div
-            style={{
-              padding: 24,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-              fontSize: '0.925rem',
-              lineHeight: 1.6,
-              color: '#475569',
-              overflowY: 'auto',
-            }}
-          >
-            {modalContent === 'privacy' && (
-              <>
-                <p>
-                  <strong>Data Ownership:</strong> All training records, attendance hours, student
-                  profile information, and custom DTTR templates belong exclusively to you.
-                </p>
-                <p>
-                  <strong>Local-First &amp; Browser Security:</strong> Your records are securely stored
-                  within your isolated browser storage. We never share or sell personal student data to
-                  unauthorized third parties.
-                </p>
-                <p>
-                  <strong>Official Documents:</strong> Generated DTTR reports are compiled locally on
-                  your device in structured portrait long bond paper formats.
-                </p>
-              </>
-            )}
-
-            {modalContent === 'terms' && (
-              <>
-                <p>
-                  <strong>Academic Honor:</strong> Trainees are responsible for the truthfulness and
-                  accuracy of all arrival and departure hours entered into this system.
-                </p>
-                <p>
-                  <strong>Certification:</strong> Official Daily Time &amp; Tasks Records must be signed
-                  by your authorized Industry Supervisor and submitted according to your college&apos;s
-                  internship department regulations.
-                </p>
-                <p>
-                  <strong>Free Availability:</strong> OJT Hours Tracker is provided free of charge for
-                  student interns to assist with training compliance.
-                </p>
-              </>
-            )}
-
-            {modalContent === 'contact' && (
-              <>
-                <p>
-                  Have questions about configuring your shift schedule, printing your DTTR, or
-                  installing the PWA?
-                </p>
-                <div
-                  style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 12,
-                    padding: 16,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  <div>
-                    <strong>Help &amp; Instructions:</strong> In-app configuration guides are available
-                    under Settings or in the How It Works section.
-                  </div>
-                  <div>
-                    <strong>Data Storage:</strong> All time logs, session intervals, and profile settings
-                    remain securely stored locally on your device.
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 12 }}>
-              <Button
-                label="Close"
-                variant="primary"
-                onClick={() => setModalContent(null)}
-              />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span>
+              &copy; {CURRENT_YEAR} {APP_CONFIG.name}. Built with care for student interns.
+            </span>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                backgroundColor: '#f1f5f9',
+                color: '#64748b',
+                padding: '2px 8px',
+                borderRadius: 6,
+                fontWeight: 600,
+              }}
+            >
+              v{APP_CONFIG.version}
+            </span>
           </div>
-        </Dialog>
-      )}
-    </>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#10b981' }} />
+            <span style={{ color: '#64748b', fontWeight: 600 }}>All Systems Operational</span>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }

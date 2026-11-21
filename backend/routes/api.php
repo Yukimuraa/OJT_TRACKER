@@ -81,6 +81,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('sync.push');
 
     // DTTR Templates
+    Route::get('/dttr-templates/{dttrTemplate}/file', [DttrTemplateController::class, 'file'])
+        ->name('dttr-templates.file');
     Route::apiResource('dttr-templates', DttrTemplateController::class);
 
     // User Reminders

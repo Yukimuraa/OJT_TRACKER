@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { PageLayout } from '../components/layout/PageLayout';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -798,18 +798,26 @@ function DeleteConfirmDialog({ isOpen, onOpenChange, record, onConfirm }) {
 /**
  * Main TimeLogs Page Component.
  */
-export function TimeLogs() {
+export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }) {
   const { currentUser, records, addRecord, updateRecord, deleteRecord } = useTraining();
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [recordToEdit, setRecordToEdit] = useState(null);
+  const [recordToView, setRecordToView] = useState(null);
+  const [recordToDelete, setRecordToDelete] = useState(null);
+
+  useEffect(() => {
+    if (openAddModal) {
+      setRecordToEdit(null);
+      setIsFormDialogOpen(true);
+      onAddModalHandled?.();
+    }
+  }, [openAddModal, onAddModalHandled]);
   const [isDttrDialogOpen, setIsDttrDialogOpen] = useState(false);
   const [selectedSystemTemplateType, setSelectedSystemTemplateType] = useState('system_chmsu_ccs');
   const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false);
   const [isCustomTemplateOpen, setIsCustomTemplateOpen] = useState(false);
   const [customTemplateMode, setCustomTemplateMode] = useState('upload'); // 'upload' | 'generate'
   const [selectedCustomTemplate, setSelectedCustomTemplate] = useState(null);
-  const [recordToEdit, setRecordToEdit] = useState(null);
-  const [recordToView, setRecordToView] = useState(null);
-  const [recordToDelete, setRecordToDelete] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
   const [sort, setSort] = useState([{ sortKey: 'date', direction: 'descending' }]);
@@ -939,13 +947,17 @@ export function TimeLogs() {
               <>
                 {/* Desktop & Tablet Table Layout (>= 769px) */}
                 <div
-                  className="ojt-desktop-only"
+                  className="ojt-desktop-only ojt-table-scroll-wrapper"
                   style={{
                     width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
                     overflowX: 'auto',
+                    WebkitOverflowScrolling: 'touch',
                     borderRadius: 12,
                     border: '1px solid #e2e8f0',
                     backgroundColor: '#ffffff',
+                    boxSizing: 'border-box',
                   }}
                 >
                   <table
@@ -1221,6 +1233,9 @@ export function TimeLogs() {
                     flexDirection: 'column',
                     gap: 12,
                     width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
+                    boxSizing: 'border-box',
                   }}
                 >
                   {sortedRecords.map((row) => {
@@ -1238,6 +1253,10 @@ export function TimeLogs() {
                           flexDirection: 'column',
                           gap: 12,
                           boxShadow: '0 1px 3px rgba(20, 43, 73, 0.04)',
+                          width: '100%',
+                          maxWidth: '100%',
+                          minWidth: 0,
+                          boxSizing: 'border-box',
                         }}
                       >
                         {/* Header: Date + Activity + Hours */}

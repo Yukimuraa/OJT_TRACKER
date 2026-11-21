@@ -372,17 +372,19 @@ export function Profile() {
         )}
 
         {/* Profile Header Hero Card */}
-        <Card elevation="low" padding={5}>
-          <HStack gap={5} align="center" wrap="wrap">
+        <Card elevation="low" padding={4}>
+          <HStack gap={4} align="center" wrap="wrap">
             <UserAvatar
               src={profile?.avatarUrl}
               alt={profile?.fullName || 'Student Intern'}
-              size={76}
+              size={72}
             />
-            <StackItem size="fill">
+            <StackItem size="fill" style={{ minWidth: 0, maxWidth: '100%' }}>
               <VStack gap={1}>
                 <HStack gap={3} align="center" wrap="wrap">
-                  <Heading level={2}>{profile?.fullName || 'Student Intern'}</Heading>
+                  <Heading level={2} style={{ wordBreak: 'break-word' }}>
+                    {profile?.fullName || 'Student Intern'}
+                  </Heading>
                   <HStack gap={1} align="center">
                     <StatusDot variant="success" label="Active Trainee" />
                     <Text size="sm" color="accent" weight="semibold">
@@ -390,10 +392,10 @@ export function Profile() {
                     </Text>
                   </HStack>
                 </HStack>
-                <Text type="body" color="secondary">
+                <Text type="body" color="secondary" style={{ wordBreak: 'break-word' }}>
                   {profile?.program || '—'} · {profile?.studentId || '—'}
                 </Text>
-                <Text size="sm" color="secondary">
+                <Text size="sm" color="secondary" style={{ wordBreak: 'break-word' }}>
                   {profile?.institution || '—'}
                 </Text>
               </VStack>
@@ -404,18 +406,18 @@ export function Profile() {
         {/* Two-Column Details Grid */}
         <Grid columns={{ minWidth: 260, max: 2 }} gap={4}>
           {/* Card 1: Academic Information */}
-          <Card elevation="low" padding={5}>
+          <Card elevation="low" padding={4}>
             <VStack gap={4}>
               <Heading level={3}>Academic Information</Heading>
               <Divider variant="subtle" />
               <VStack gap={3}>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Institution / College</Text>
-                  <Text weight="medium">{profile?.institution || '—'}</Text>
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>{profile?.institution || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Degree Program</Text>
-                  <Text weight="medium">{profile?.program || '—'}</Text>
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>{profile?.program || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Student ID Number</Text>
@@ -432,30 +434,30 @@ export function Profile() {
           </Card>
 
           {/* Card 2: Training Placement Details */}
-          <Card elevation="low" padding={5}>
+          <Card elevation="low" padding={4}>
             <VStack gap={4}>
               <Heading level={3}>Training Establishment</Heading>
               <Divider variant="subtle" />
               <VStack gap={3}>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Host Company</Text>
-                  <Text weight="medium">{profile?.company || '—'}</Text>
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>{profile?.company || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Assigned Department</Text>
-                  <Text weight="medium">{profile?.department || '—'}</Text>
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>{profile?.department || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Designated Supervisor</Text>
-                  <Text weight="medium">{profile?.supervisor || '—'}</Text>
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>{profile?.supervisor || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Supervisor Email</Text>
-                  <Text weight="medium">{profile?.supervisorEmail || '—'}</Text>
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>{profile?.supervisorEmail || '—'}</Text>
                 </VStack>
                 <VStack gap={0.5}>
                   <Text size="sm" color="secondary">Regular Daily Schedule</Text>
-                  <Text weight="medium">
+                  <Text weight="medium" style={{ wordBreak: 'break-word' }}>
                     {profile?.morningEnabled !== false
                       ? `AM: ${profile?.morningStart || onboarding?.morningTimeIn || '08:00'}–${profile?.morningEnd || onboarding?.morningTimeOut || '12:00'}`
                       : 'AM: Off'}

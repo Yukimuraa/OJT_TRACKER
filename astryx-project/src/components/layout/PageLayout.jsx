@@ -1,38 +1,80 @@
 import React from 'react';
-import { VStack } from '@astryxdesign/core/VStack';
-import { HStack } from '@astryxdesign/core/HStack';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Text } from '@astryxdesign/core/Text';
-import { Section } from '@astryxdesign/core/Section';
-import { StackItem } from '@astryxdesign/core/Stack';
 
+/**
+ * PageLayout - Consistent layout wrapper for application views.
+ * Designed to prevent horizontal card overflow and border clipping
+ * across all screen sizes (mobile, tablet, and desktop).
+ */
 export function PageLayout({ title, description, actions, children }) {
   return (
-    <VStack gap={4}>
-      <HStack gap={3} align="center" wrap="wrap" justify="between">
-        <StackItem size="fill" style={{ minWidth: 240 }}>
-          <VStack gap={1}>
-            <Heading level={1}>{title}</Heading>
-            {description && (
-              <Text type="supporting" color="secondary">
-                {description}
-              </Text>
-            )}
-          </VStack>
-        </StackItem>
+    <div
+      className="ojt-page-layout"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Page Header (Title, Subtitle, Action Buttons) */}
+      <div
+        className="ojt-page-layout-header"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
+        }}
+      >
+        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+          <Heading level={1}>{title}</Heading>
+          {description && (
+            <Text type="supporting" color="secondary" style={{ marginTop: 4, display: 'block' }}>
+              {description}
+            </Text>
+          )}
+        </div>
         {actions && (
-          <StackItem size="static" style={{ maxWidth: '100%' }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {actions}
-            </div>
-          </StackItem>
+          <div
+            className="ojt-page-layout-actions"
+            style={{
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              flexShrink: 0,
+              maxWidth: '100%',
+            }}
+          >
+            {actions}
+          </div>
         )}
-      </HStack>
+      </div>
 
-      <Section variant="transparent" padding={0}>
+      {/* Main Page Content - Clean container without negative margins */}
+      <div
+        className="ojt-page-layout-content"
+        style={{
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
+        }}
+      >
         {children}
-      </Section>
-    </VStack>
+      </div>
+    </div>
   );
 }
 
+export default PageLayout;

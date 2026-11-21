@@ -158,11 +158,16 @@ export async function request(endpoint, options = {}) {
     throw new ApiError(message, response.status, data);
   }
 
+  if (options.responseType === 'blob') {
+    return await response.blob();
+  }
+
   return data;
 }
 
 export const apiClient = {
   get: (url, options = {}) => request(url, { ...options, method: 'GET' }),
+  getBlob: (url, options = {}) => request(url, { ...options, method: 'GET', responseType: 'blob' }),
   post: (url, body, options = {}) => request(url, { ...options, method: 'POST', body }),
   put: (url, body, options = {}) => request(url, { ...options, method: 'PUT', body }),
   patch: (url, body, options = {}) => request(url, { ...options, method: 'PATCH', body }),

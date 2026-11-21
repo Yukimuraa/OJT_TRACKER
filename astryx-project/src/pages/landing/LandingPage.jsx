@@ -61,7 +61,7 @@ export function LandingPage({ onEnterApp, onNavigate }) {
         <FeaturesSection />
         <HowItWorksSection />
         <CTASection onRegister={handleRegister} />
-        <FooterSection onRegister={handleRegister} onLogin={handleLogin} />
+        <FooterSection onRegister={handleRegister} onLogin={handleLogin} onNavigate={onNavigate} />
       </VStack>
     </div>
   );

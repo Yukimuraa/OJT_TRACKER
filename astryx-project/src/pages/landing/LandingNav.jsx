@@ -6,6 +6,7 @@ import {
   SparklesIcon,
   DeviceMobileIcon,
   ClipboardCheckIcon,
+  UserIcon,
 } from '../../components/common/BrandIcons';
 
 const NAV_LINKS = [
@@ -214,34 +215,83 @@ export function LandingNav({ onRegister, onLogin }) {
                 gap: 12,
               }}
             >
-              <Button
-                label="Login"
-                variant="ghost"
-                size="md"
+              <button
+                type="button"
                 onClick={onLogin}
-              />
-              <Button
-                label="Get Started"
-                variant="primary"
-                size="md"
+                aria-label="Login to account"
+                style={{
+                  padding: '8px 18px',
+                  fontSize: '0.9375rem',
+                  fontWeight: 600,
+                  color: '#142b49',
+                  backgroundColor: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  minHeight: 40,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#10b981';
+                  e.currentTarget.style.color = '#10b981';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#142b49';
+                }}
+              >
+                Login
+              </button>
+              <button
+                type="button"
                 onClick={onRegister}
-              />
+                aria-label="Create account"
+                style={{
+                  padding: '8px 20px',
+                  fontSize: '0.9375rem',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  backgroundColor: '#10b981',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  transition: 'all 0.15s ease',
+                  minHeight: 40,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#059669';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#10b981';
+                }}
+              >
+                Get Started
+              </button>
             </div>
 
-            {/* Mobile Top Header Actions (Direct authentication buttons replacing hamburger menu) */}
+            {/* Mobile Top Header Actions */}
             <div
               className="ojt-mobile-only"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
+                flexShrink: 0,
               }}
             >
               <button
                 type="button"
                 onClick={onLogin}
+                aria-label="Login"
                 style={{
-                  padding: '7px 12px',
+                  padding: '7px 14px',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   color: '#142b49',
@@ -250,6 +300,7 @@ export function LandingNav({ onRegister, onLogin }) {
                   borderRadius: 8,
                   cursor: 'pointer',
                   minHeight: 38,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Login
@@ -257,6 +308,7 @@ export function LandingNav({ onRegister, onLogin }) {
               <button
                 type="button"
                 onClick={onRegister}
+                aria-label="Get Started"
                 style={{
                   padding: '7px 14px',
                   fontSize: '0.875rem',
@@ -268,6 +320,7 @@ export function LandingNav({ onRegister, onLogin }) {
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
                   minHeight: 38,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Get Started
@@ -328,6 +381,30 @@ export function LandingNav({ onRegister, onLogin }) {
             </button>
           );
         })}
+
+        {/* Mobile Landing Bottom Bar Login Button */}
+        <button
+          type="button"
+          onClick={onLogin}
+          aria-label="Student Login"
+          className="ojt-landing-bottom-nav-item"
+          style={{
+            color: '#10b981',
+          }}
+        >
+          <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}>
+            <UserIcon width={20} height={20} />
+          </div>
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              color: '#10b981',
+            }}
+          >
+            Login
+          </span>
+        </button>
       </nav>
     </>
   );

@@ -15,7 +15,7 @@
  *   onSelectCustom – (tmpl) => void (user picked an uploaded template)
  *   onUploadNew    – () => void   (user wants to upload a new template)
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -24,6 +24,8 @@ import { Button } from '@astryxdesign/core/Button';
 import { Banner } from '@astryxdesign/core/Banner';
 import {
   loadUserTemplates,
+  fetchAndSyncUserTemplates,
+  ensureTemplateDataUrl,
   deleteUserTemplate,
   updateUserTemplate,
   COMPUTER_STUDIES_TEMPLATE,
@@ -153,33 +155,60 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
   const [renamingId, setRenamingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  useEffect(() => {
+    let isCancelled = false;
+    async function sync() {
+      try {
+        const synced = await fetchAndSyncUserTemplates(userId);
+        if (!isCancelled && synced) {
+          setTemplates(synced);
+        }
+      } catch (err) {
+        console.warn('Failed to sync templates:', err);
+      }
+    }
+    sync();
+    return () => { isCancelled = true; };
+  }, [userId]);
 
-  const refresh = useCallback(() => setTemplates(loadUserTemplates(userId)), [userId]);
-
-  const handleRename = (id, newName) => {
+  const handleRename = async (id, newName) => {
     if (!newName.trim()) return;
-    updateUserTemplate(id, { name: newName.trim() }, userId);
-    refresh();
-    setRenamingId(null);
+    try {
+      await updateUserTemplate(id, { name: newName.trim() }, userId);
+      setTemplates(loadUserTemplates(userId));
+      setRenamingId(null);
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to rename template.' });
+    }
   };
 
-  const handleDelete = (id) => {
-    deleteUserTemplate(id, userId);
-    refresh();
-    setDeletingId(null);
-    if (selectedId === id) setSelectedId('system_chmsu_ccs');
-    setFeedback({ type: 'success', message: 'Template deleted.' });
-    setTimeout(() => setFeedback(null), 2500);
+  const handleDelete = async (id) => {
+    try {
+      await deleteUserTemplate(id, userId);
+      setTemplates(loadUserTemplates(userId));
+      setDeletingId(null);
+      if (selectedId === id) setSelectedId('system_chmsu_ccs');
+      setFeedback({ type: 'success', message: 'Template deleted.' });
+      setTimeout(() => setFeedback(null), 2500);
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to delete template.' });
+    }
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (selectedId === COMPUTER_STUDIES_TEMPLATE.id || selectedId === 'system_chmsu_ccs') {
       onSelectSystem('system_chmsu_ccs');
     } else if (selectedId === SYSTEM_TEMPLATE.id || selectedId === 'system_default') {
       onSelectSystem('system_default');
     } else {
-      const tmpl = templates.find((t) => t.id === selectedId);
-      if (tmpl) onSelectCustom(tmpl);
+      let tmpl = templates.find((t) => String(t.id) === String(selectedId));
+      if (tmpl) {
+        if (!tmpl.dataUrl) {
+          const dataUrl = await ensureTemplateDataUrl(tmpl, userId);
+          if (dataUrl) tmpl = { ...tmpl, dataUrl };
+        }
+        onSelectCustom(tmpl);
+      }
     }
   };
 
@@ -340,8 +369,8 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
           {templates.map((tmpl) => (
             <TemplateCard
               key={tmpl.id}
-              selected={selectedId === tmpl.id}
-              onClick={() => { if (deletingId !== tmpl.id && renamingId !== tmpl.id) setSelectedId(tmpl.id); }}
+              selected={String(selectedId) === String(tmpl.id)}
+              onClick={() => { if (String(deletingId) !== String(tmpl.id) && String(renamingId) !== String(tmpl.id)) setSelectedId(tmpl.id); }}
             >
               {/* PDF preview thumbnail — clean canvas, zero iframe, zero black border, zero scrollbar */}
               <div
@@ -367,7 +396,7 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
 
               {/* Name row + action buttons */}
               <div onClick={(e) => e.stopPropagation()}>
-                {renamingId === tmpl.id ? (
+                {String(renamingId) === String(tmpl.id) ? (
                   <RenameInline
                     value={tmpl.name}
                     onSave={(n) => handleRename(tmpl.id, n)}
@@ -413,7 +442,7 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
                 )}
 
                 {/* Delete confirmation */}
-                {deletingId === tmpl.id && (
+                {String(deletingId) === String(tmpl.id) && (
                   <div
                     style={{
                       marginTop: 8, padding: '8px 10px', borderRadius: 8,
@@ -446,7 +475,7 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
                 )}
               </div>
 
-              {selectedId === tmpl.id && (
+              {String(selectedId) === String(tmpl.id) && (
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981', textAlign: 'right' }}>✓ Selected</div>
               )}
             </TemplateCard>
@@ -472,7 +501,7 @@ function TemplateSelectorContent({ onOpenChange, currentUser, onSelectSystem, on
             ? 'Computer Studies – Main Campus, Talisay template selected.'
             : selectedId === 'system_default' || selectedId === SYSTEM_TEMPLATE.id
             ? 'System Template selected.'
-            : `Custom template: "${templates.find((t) => t.id === selectedId)?.name ?? ''}"`}
+            : `Custom template: "${templates.find((t) => String(t.id) === String(selectedId))?.name ?? ''}"`}
         </Text>
         <HStack gap={2}>
           <Button label="Cancel" variant="secondary" onClick={() => onOpenChange(false)} />

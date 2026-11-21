@@ -21,6 +21,9 @@ class DttrTemplate extends Model
         'name',
         'description',
         'file_path',
+        'file_name',
+        'file_size_kb',
+        'field_map',
         'template_type',
         'is_active',
     ];
@@ -34,6 +37,8 @@ class DttrTemplate extends Model
     {
         return [
             'is_active' => 'boolean',
+            'field_map' => 'array',
+            'file_size_kb' => 'integer',
         ];
     }
 

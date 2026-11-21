@@ -36,6 +36,37 @@ html[data-theme="light"],
   --color-shadow: rgba(20, 43, 73, 0.06);
 }
 
+/* Optional Dark Theme Palette - Strictly applied ONLY when user toggles dark mode on */
+html.dark[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand Primary & Accents */
+  --color-accent: #10b981;
+  --color-on-accent: #ffffff;
+  --color-accent-muted: rgba(16, 185, 129, 0.2);
+  --color-text-accent: #34d399;
+  --color-icon-accent: #10b981;
+
+  /* Surfaces & Backgrounds */
+  --color-background-body: #0f172a;
+  --color-background-surface: #1e293b;
+  --color-background-card: #1e293b;
+  --color-background-popover: #1e293b;
+  --color-background-muted: #1e293b;
+
+  /* Typography Colors */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-disabled: #64748b;
+
+  /* Borders */
+  --color-border: #334155;
+  --color-border-emphasized: #475569;
+
+  /* Shadows */
+  --color-shadow: rgba(0, 0, 0, 0.35);
+}
+
 @keyframes ojtSlideDown {
   from {
     opacity: 0;
@@ -247,6 +278,41 @@ main,
   -webkit-overflow-scrolling: touch;
   border-radius: 12px;
   position: relative;
+  box-sizing: border-box;
+}
+
+/* Authenticated main container containment */
+.ojt-authenticated-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Reports 4-card summary grid: clean 2x2 on mobile, 4-column on desktop/tablet */
+.ojt-reports-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .ojt-reports-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Card boundary safety: ensure all cards respect parent bounds without clipped borders */
+.ojt-page-layout,
+.ojt-page-layout-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Prevent fixed-width overflows across small phones */
@@ -500,32 +566,101 @@ main,
 }
 
 /* ==========================================================================
-   Mobile Bottom Navigation
-   Fixed 5-item bottom bar for authenticated application views on mobile devices
+   Responsive Settings Views & Mobile iOS-Inspired Experience
    ========================================================================== */
 @media (min-width: 769px) {
+  .ojt-settings-mobile-view {
+    display: none !important;
+  }
+  .ojt-settings-desktop-view {
+    display: block !important;
+  }
   #ojt-mobile-bottom-nav,
   .ojt-mobile-bottom-nav {
     display: none !important;
   }
+
+  /* Desktop Background Canvas: #FCFCFB */
+  body,
+  #root,
+  main,
+  .ojt-authenticated-content,
+  .ojt-landing-root,
+  [data-astryx-theme] main {
+    background-color: #FCFCFB !important;
+  }
+
+  html.dark[data-theme="dark"] body,
+  html.dark[data-theme="dark"] #root,
+  html.dark[data-theme="dark"] main,
+  html.dark[data-theme="dark"] .ojt-authenticated-content {
+    background-color: #0f172a !important;
+  }
 }
 
 @media (max-width: 768px) {
+  .ojt-settings-mobile-view {
+    display: block !important;
+  }
+  .ojt-settings-desktop-view {
+    display: none !important;
+  }
   #ojt-mobile-bottom-nav,
   .ojt-mobile-bottom-nav {
     display: flex !important;
   }
 
-  /* Safe scrolling clearance for all authenticated views so bottom nav doesn't overlap controls */
+  /* Mobile Background: #F4F7FA as required */
+  body,
+  #root,
+  main,
+  .ojt-authenticated-content,
+  [data-astryx-theme] main {
+    background-color: #F4F7FA !important;
+  }
+
+  /* Optional dark mode background override on mobile ONLY when user explicitly enabled it */
+  html.dark[data-theme="dark"] body,
+  html.dark[data-theme="dark"] #root,
+  html.dark[data-theme="dark"] main,
+  html.dark[data-theme="dark"] .ojt-authenticated-content {
+    background-color: #0f172a !important;
+  }
+
+  /* Safe scrolling clearance for floating bottom nav so controls are never obscured */
   .ojt-authenticated-content,
   main {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
+
+  /* 20-26px rounded corners for mobile cards */
+  .ojt-ios-group-card,
+  [data-astryx-theme] .astryx-card,
+  .astryx-card {
+    border-radius: 22px !important;
+  }
+}
+
+.ojt-ios-settings-row:hover {
+  background-color: var(--color-background-muted, #F8FAFC);
+}
+
+.ojt-ios-settings-row:active {
+  background-color: rgba(226, 232, 240, 0.5);
+}
+
+html[data-theme="dark"] .ojt-ios-settings-row:hover {
+  background-color: rgba(51, 65, 85, 0.4);
+}
+
+html[data-theme="dark"] .ojt-ios-settings-row:active {
+  background-color: rgba(51, 65, 85, 0.7);
 }
 
 @media print {
   #ojt-mobile-bottom-nav,
-  .ojt-mobile-bottom-nav {
+  .ojt-mobile-bottom-nav,
+  .ojt-settings-mobile-view {
     display: none !important;
   }
 }
