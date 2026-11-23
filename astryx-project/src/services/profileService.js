@@ -1,4 +1,4 @@
-import { getCurrentUser } from './authService.js';
+import { getCurrentUser, updateCurrentUserSession } from './authService.js';
 import apiClient from './apiClient.js';
 
 export function getProfileStorageKey(userId = null) {
@@ -8,7 +8,7 @@ export function getProfileStorageKey(userId = null) {
 
 export const DEFAULT_STUDENT_PROFILE = {
   fullName: 'Student Intern',
-  studentId: '2026-OJT-001',
+  studentId: '',
   avatarUrl: '/assets/student-avatar.png',
   program: 'BS Information Technology',
   institution: 'Technological University of the Philippines',
@@ -158,8 +158,19 @@ export async function updateStudentProfile(profileData) {
   const updated = { ...current, ...profileData };
   saveStoredProfile(updated, currentUser?.id);
 
+  if (profileData.studentId !== undefined || profileData.fullName !== undefined) {
+    updateCurrentUserSession({
+      ...(profileData.studentId !== undefined ? { studentId: String(profileData.studentId || '').trim() } : {}),
+      ...(profileData.fullName !== undefined ? { fullName: String(profileData.fullName || '').trim() } : {}),
+    });
+  }
+
   try {
     const payload = {};
+    if (profileData.studentId !== undefined) {
+      const trimmedId = String(profileData.studentId || '').trim();
+      payload.student_id = trimmedId || null;
+    }
     if (profileData.requiredHours) payload.required_hours = Number(profileData.requiredHours);
     if (profileData.hoursPerDay) payload.hours_per_day = Number(profileData.hoursPerDay);
     if (profileData.startDate) payload.start_date = profileData.startDate;

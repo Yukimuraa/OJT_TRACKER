@@ -1,6 +1,5 @@
 import React from 'react';
 import { TopNav } from '@astryxdesign/core/TopNav';
-import { Heading } from '@astryxdesign/core/Heading';
 import { HStack } from '@astryxdesign/core/HStack';
 import { IconButton } from '@astryxdesign/core/IconButton';
 import { Icon } from '@astryxdesign/core/Icon';
@@ -10,7 +9,7 @@ import { UserAvatar } from '../common/UserAvatar';
 import { loadStoredProfile } from '../../services/profileService';
 import { logoutUser, getCurrentUser } from '../../services/authService';
 
-export function TopNavigation({ pageTitle, onNavigate }) {
+export function TopNavigation({ onNavigate }) {
   const user = getCurrentUser();
   const profile = loadStoredProfile(user?.id);
   const studentName = user?.fullName || profile?.fullName || 'Student Trainee';
@@ -43,13 +42,6 @@ export function TopNavigation({ pageTitle, onNavigate }) {
   return (
     <TopNav
       label="Top Application Navigation"
-      heading={
-        <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          <Heading level={2} weight="semibold">
-            {pageTitle}
-          </Heading>
-        </div>
-      }
       endContent={
         <HStack gap={2} align="center">
           <IconButton

@@ -1,43 +1,40 @@
 import React, { useState } from 'react';
-import { VStack } from '@astryxdesign/core/VStack';
-import { HStack } from '@astryxdesign/core/HStack';
-import { Card } from '@astryxdesign/core/Card';
-import { Heading } from '@astryxdesign/core/Heading';
-import { Text } from '@astryxdesign/core/Text';
-import { TextInput } from '@astryxdesign/core/TextInput';
-import { InputGroup } from '@astryxdesign/core/InputGroup';
-import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
-import { Button } from '@astryxdesign/core/Button';
-import { Icon } from '@astryxdesign/core/Icon';
-import { StatusDot } from '@astryxdesign/core/StatusDot';
-import { Divider } from '@astryxdesign/core/Divider';
 import { Banner } from '@astryxdesign/core/Banner';
-import { GraduationCapIcon } from '../../components/common/BrandIcons';
+import {
+  AuthSplitLayout,
+  AuthInput,
+  AuthPasswordInput,
+  PasswordRequirements,
+  evaluatePasswordRequirements,
+} from '../../components/auth/AuthFormControls';
 import { registerUser } from '../../services/authService';
-
-const CURRENT_YEAR = new Date().getFullYear();
+import { loadStoredProfile, saveStoredProfile } from '../../services/profileService';
 
 export function RegisterPage({ onNavigate }) {
   const [form, setForm] = useState({
     fullName: '',
-    studentId: '',
     email: '',
+    studentId: '',
     password: '',
     confirmPassword: '',
-    agreeToTerms: false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
-  // Password requirements checks
-  const hasMinLength = form.password.length >= 8;
-  const hasLetter = /[a-zA-Z]/.test(form.password);
-  const hasNumber = /[0-9]/.test(form.password);
-  const isPasswordStrong = hasMinLength && hasLetter && hasNumber;
+  const { allMet: isPasswordStrong } = evaluatePasswordRequirements(form.password);
+
+  // Real-time confirm password match state (never show success when empty)
+  const hasConfirmInput = form.confirmPassword.length > 0;
+  const passwordsMatch =
+    hasConfirmInput && form.password.length > 0 && form.password === form.confirmPassword;
+  const liveConfirmMismatch =
+    hasConfirmInput && form.password !== form.confirmPassword ? 'Passwords do not match.' : undefined;
+
+  const confirmError = errors.confirmPassword || liveConfirmMismatch;
+  const confirmSuccess = !confirmError && passwordsMatch ? 'Passwords match' : undefined;
 
   const validate = () => {
     const nextErrors = {};
@@ -46,15 +43,16 @@ export function RegisterPage({ onNavigate }) {
       nextErrors.fullName = 'Full name is required.';
     }
 
-    if (!form.studentId.trim()) {
-      nextErrors.studentId = 'Student ID number is required.';
-    }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!form.email.trim()) {
       nextErrors.email = 'Email address is required.';
-    } else if (!emailRegex.test(form.email)) {
+    } else if (!emailRegex.test(form.email.trim())) {
       nextErrors.email = 'Please enter a valid email address.';
+    }
+
+    // Student ID is optional — only validate length if provided
+    if (form.studentId.trim().length > 50) {
+      nextErrors.studentId = 'Student ID must not exceed 50 characters.';
     }
 
     if (!form.password) {
@@ -67,10 +65,6 @@ export function RegisterPage({ onNavigate }) {
       nextErrors.confirmPassword = 'Please confirm your password.';
     } else if (form.password !== form.confirmPassword) {
       nextErrors.confirmPassword = 'Passwords do not match.';
-    }
-
-    if (!form.agreeToTerms) {
-      nextErrors.agreeToTerms = 'You must accept the Terms and Conditions to proceed.';
     }
 
     return nextErrors;
@@ -88,22 +82,50 @@ export function RegisterPage({ onNavigate }) {
     setErrors({});
     setIsSubmitting(true);
 
+    const trimmedStudentId = form.studentId.trim();
+
     try {
       const result = await registerUser({
-        fullName: form.fullName,
-        studentId: form.studentId,
-        email: form.email,
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        studentId: trimmedStudentId || null,
         password: form.password,
+        confirmPassword: form.confirmPassword,
       });
 
       setIsSubmitting(false);
 
       if (!result.success) {
-        setErrors({ form: result.error });
+        const fieldErrors = {};
+        if (result.errors?.email?.[0]) fieldErrors.email = result.errors.email[0];
+        if (result.errors?.student_id?.[0]) fieldErrors.studentId = result.errors.student_id[0];
+        if (result.errors?.password?.[0]) fieldErrors.password = result.errors.password[0];
+        if (result.errors?.name?.[0]) fieldErrors.fullName = result.errors.name[0];
+
+        setErrors({
+          ...fieldErrors,
+          form: result.error,
+        });
         return;
       }
 
-      setIsSuccess(true);
+      // Sync optional studentId (or empty string if omitted — never invent an ID) to local profile cache
+      const userId = result.user?.id;
+      const existingProfile = loadStoredProfile(userId);
+      saveStoredProfile(
+        {
+          ...existingProfile,
+          fullName: form.fullName.trim(),
+          studentId: trimmedStudentId,
+        },
+        userId
+      );
+
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('ojt_resume_onboarding_step', '0');
+      }
+
+      onNavigate?.('onboarding');
     } catch {
       setIsSubmitting(false);
       setErrors({ form: 'An unexpected error occurred during registration. Please try again.' });
@@ -111,275 +133,172 @@ export function RegisterPage({ onNavigate }) {
   };
 
   return (
-    <div className="ojt-landing-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Top Header Bar */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-background-surface)',
-          padding: '16px 24px',
-        }}
-      >
-        <div className="ojt-landing-container">
-          <HStack justify="between" align="center">
-            <HStack
-              gap={2}
-              align="center"
-              style={{ cursor: 'pointer' }}
-              onClick={() => onNavigate?.('landing')}
-            >
-              <Icon icon={GraduationCapIcon} size="md" color="accent" />
-              <Heading level={3}>OJT Tracker</Heading>
-            </HStack>
+    <AuthSplitLayout onNavigate={onNavigate}>
+      {/* Form Heading & Supporting Text */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h1
+          style={{
+            fontSize: 'clamp(1.6rem, 2.4vw, 1.95rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.025em',
+            color: '#111111',
+            margin: 0,
+            lineHeight: 1.2,
+          }}
+        >
+          Create your account
+        </h1>
+        <p
+          style={{
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: '#666662',
+            margin: 0,
+          }}
+        >
+          Start tracking your OJT journey.
+        </p>
+      </div>
 
-            <Button
-              label="Back to Home"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon="chevronLeft" size="sm" />}
-              onClick={() => onNavigate?.('landing')}
+      {errors.form && (
+        <Banner
+          status="error"
+          title={errors.form}
+        />
+      )}
+
+      <form onSubmit={handleSubmit} noValidate style={{ width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+          {/* 1. Full Name — REQUIRED */}
+          <AuthInput
+            id="register-fullname"
+            name="fullName"
+            label="Full Name"
+            required
+            autoComplete="name"
+            placeholder="Enter your full name"
+            value={form.fullName}
+            onChange={(val) => {
+              setForm((p) => ({ ...p, fullName: val }));
+              if (errors.fullName) setErrors((p) => ({ ...p, fullName: undefined }));
+            }}
+            error={errors.fullName}
+            disabled={isSubmitting}
+          />
+
+          {/* 2. Email Address — REQUIRED */}
+          <AuthInput
+            id="register-email"
+            name="email"
+            type="email"
+            label="Email Address"
+            required
+            autoComplete="email"
+            placeholder="name@school.edu.ph"
+            value={form.email}
+            onChange={(val) => {
+              setForm((p) => ({ ...p, email: val }));
+              if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+            }}
+            error={errors.email}
+            disabled={isSubmitting}
+          />
+
+          {/* 3. Student ID — OPTIONAL */}
+          <AuthInput
+            id="register-student-id"
+            name="studentId"
+            label="Student ID"
+            optionalLabel="Optional"
+            placeholder="Enter your student ID"
+            value={form.studentId}
+            onChange={(val) => {
+              setForm((p) => ({ ...p, studentId: val }));
+              if (errors.studentId) setErrors((p) => ({ ...p, studentId: undefined }));
+            }}
+            error={errors.studentId}
+            disabled={isSubmitting}
+          />
+
+          {/* 4. Password — REQUIRED + Interactive Password Requirements */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <AuthPasswordInput
+              id="register-password"
+              name="password"
+              label="Password"
+              required
+              autoComplete="new-password"
+              placeholder="Create a password"
+              value={form.password}
+              onChange={(val) => {
+                setForm((p) => ({ ...p, password: val }));
+                if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
+              }}
+              showPassword={showPassword}
+              onToggleShow={() => setShowPassword((prev) => !prev)}
+              error={errors.password}
+              disabled={isSubmitting}
             />
-          </HStack>
-        </div>
-      </header>
 
-      {/* Main Registration Content */}
-      <main
+            <PasswordRequirements password={form.password} />
+          </div>
+
+          {/* 5. Confirm Password — REQUIRED */}
+          <AuthPasswordInput
+            id="register-confirm-password"
+            name="confirmPassword"
+            label="Confirm Password"
+            required
+            autoComplete="new-password"
+            placeholder="Re-enter your password"
+            value={form.confirmPassword}
+            onChange={(val) => {
+              setForm((p) => ({ ...p, confirmPassword: val }));
+              if (errors.confirmPassword) {
+                setErrors((p) => ({ ...p, confirmPassword: undefined }));
+              }
+            }}
+            showPassword={showConfirmPassword}
+            onToggleShow={() => setShowConfirmPassword((prev) => !prev)}
+            error={confirmError}
+            successMessage={confirmSuccess}
+            disabled={isSubmitting}
+          />
+
+          {/* Primary Create Account Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="ojt-auth-primary-btn"
+            style={{ marginTop: 4 }}
+          >
+            {isSubmitting ? 'Creating account...' : 'Create Account'}
+          </button>
+        </div>
+      </form>
+
+      <div
         style={{
-          flex: 1,
+          borderTop: '1px solid #E5E5E0',
+          paddingTop: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 16px',
+          gap: 6,
+          flexWrap: 'wrap',
+          fontSize: 14,
+          color: '#666662',
         }}
       >
-        <Card
-          elevation="low"
-          padding={6}
-          style={{ width: '100%', maxWidth: 540 }}
+        <span>Already have an account?</span>
+        <button
+          type="button"
+          onClick={() => onNavigate?.('login')}
+          className="ojt-auth-link-btn"
         >
-          <VStack gap={6}>
-            {/* Header Titles */}
-            <VStack gap={2} align="center">
-              <Heading level={1} align="center">
-                Create Your Account
-              </Heading>
-              <Text type="body" color="secondary" align="center">
-                Join OJT Tracker and start organizing your internship journey.
-              </Text>
-            </VStack>
-
-            {/* Success Feedback Banner */}
-            {isSuccess ? (
-              <VStack gap={4}>
-                <Banner
-                  status="success"
-                  title="Account Created Successfully"
-                  description="Your student account has been registered. You can now log in with your email address and password."
-                />
-                <Button
-                  label="Proceed to Login"
-                  variant="primary"
-                  onClick={() => onNavigate?.('login')}
-                  width="100%"
-                />
-              </VStack>
-            ) : (
-              <form onSubmit={handleSubmit} noValidate>
-                <VStack gap={4}>
-                  {errors.form && (
-                    <Banner
-                      status="error"
-                      title={errors.form}
-                    />
-                  )}
-                  {/* Full Name */}
-                  <TextInput
-                    label="Full Name"
-                    isRequired
-                    placeholder="e.g. Alex Morgan"
-                    value={form.fullName}
-                    onChange={(val) => {
-                      setForm((p) => ({ ...p, fullName: val }));
-                      if (errors.fullName) setErrors((p) => ({ ...p, fullName: undefined }));
-                    }}
-                    status={errors.fullName ? { type: 'error', message: errors.fullName } : undefined}
-                    width="100%"
-                  />
-
-                  {/* Student ID */}
-                  <TextInput
-                    label="Student ID Number"
-                    isRequired
-                    placeholder="e.g. 2026-OJT-001"
-                    value={form.studentId}
-                    onChange={(val) => {
-                      setForm((p) => ({ ...p, studentId: val }));
-                      if (errors.studentId) setErrors((p) => ({ ...p, studentId: undefined }));
-                    }}
-                    status={errors.studentId ? { type: 'error', message: errors.studentId } : undefined}
-                    width="100%"
-                  />
-
-                  {/* Email Address */}
-                  <TextInput
-                    type="email"
-                    label="Email Address"
-                    isRequired
-                    placeholder="name@school.edu.ph"
-                    value={form.email}
-                    onChange={(val) => {
-                      setForm((p) => ({ ...p, email: val }));
-                      if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
-                    }}
-                    status={errors.email ? { type: 'error', message: errors.email } : undefined}
-                    width="100%"
-                  />
-
-                  {/* Password with Visibility Toggle */}
-                  <InputGroup
-                    label="Password"
-                    isRequired
-                    status={errors.password ? { type: 'error', message: errors.password } : undefined}
-                  >
-                    <TextInput
-                      type={showPassword ? 'text' : 'password'}
-                      label="Password"
-                      isLabelHidden
-                      placeholder="At least 8 characters"
-                      value={form.password}
-                      onChange={(val) => {
-                        setForm((p) => ({ ...p, password: val }));
-                        if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
-                      }}
-                      width="100%"
-                    />
-                    <Button
-                      label={showPassword ? 'Hide' : 'Show'}
-                      variant="ghost"
-                      onClick={() => setShowPassword(!showPassword)}
-                    />
-                  </InputGroup>
-
-                  {/* Password Strength / Requirements Indicator */}
-                  {form.password.length > 0 && (
-                    <Card variant="muted" padding={3}>
-                      <VStack gap={1.5}>
-                        <Text size="sm" weight="semibold">
-                          Password Requirements:
-                        </Text>
-                        <HStack gap={2} align="center">
-                          <StatusDot
-                            variant={hasMinLength ? 'success' : 'neutral'}
-                            label={hasMinLength ? 'Met' : 'Pending'}
-                          />
-                          <Text size="sm" color={hasMinLength ? 'accent' : 'secondary'}>
-                            At least 8 characters
-                          </Text>
-                        </HStack>
-                        <HStack gap={2} align="center">
-                          <StatusDot
-                            variant={hasLetter ? 'success' : 'neutral'}
-                            label={hasLetter ? 'Met' : 'Pending'}
-                          />
-                          <Text size="sm" color={hasLetter ? 'accent' : 'secondary'}>
-                            Contains at least one letter
-                          </Text>
-                        </HStack>
-                        <HStack gap={2} align="center">
-                          <StatusDot
-                            variant={hasNumber ? 'success' : 'neutral'}
-                            label={hasNumber ? 'Met' : 'Pending'}
-                          />
-                          <Text size="sm" color={hasNumber ? 'accent' : 'secondary'}>
-                            Contains at least one number
-                          </Text>
-                        </HStack>
-                      </VStack>
-                    </Card>
-                  )}
-
-                  {/* Confirm Password with Visibility Toggle */}
-                  <InputGroup
-                    label="Confirm Password"
-                    isRequired
-                    status={errors.confirmPassword ? { type: 'error', message: errors.confirmPassword } : undefined}
-                  >
-                    <TextInput
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      label="Confirm Password"
-                      isLabelHidden
-                      placeholder="Re-enter your password"
-                      value={form.confirmPassword}
-                      onChange={(val) => {
-                        setForm((p) => ({ ...p, confirmPassword: val }));
-                        if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined }));
-                      }}
-                      width="100%"
-                    />
-                    <Button
-                      label={showConfirmPassword ? 'Hide' : 'Show'}
-                      variant="ghost"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    />
-                  </InputGroup>
-
-                  {/* Terms and Conditions Checkbox */}
-                  <CheckboxInput
-                    label="I agree to the OJT Tracker Terms and Conditions"
-                    description="I acknowledge that my training attendance and logs are subject to institutional guidelines."
-                    value={form.agreeToTerms}
-                    onChange={(checked) => {
-                      setForm((p) => ({ ...p, agreeToTerms: checked }));
-                      if (errors.agreeToTerms) setErrors((p) => ({ ...p, agreeToTerms: undefined }));
-                    }}
-                    status={errors.agreeToTerms ? { type: 'error', message: errors.agreeToTerms } : undefined}
-                  />
-
-                  {/* Create Account Button */}
-                  <Button
-                    label="Create Account"
-                    variant="primary"
-                    size="lg"
-                    type="submit"
-                    isLoading={isSubmitting}
-                    width="100%"
-                  />
-                </VStack>
-              </form>
-            )}
-
-            <Divider variant="subtle" />
-
-            {/* Link to Login */}
-            <HStack justify="center" align="center" gap={1}>
-              <Text size="sm" color="secondary">
-                Already have an account?
-              </Text>
-              <Button
-                label="Log In"
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate?.('login')}
-              />
-            </HStack>
-          </VStack>
-        </Card>
-      </main>
-
-      {/* Footer */}
-      <footer
-        style={{
-          borderTop: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-background-surface)',
-          padding: '16px 24px',
-          textAlign: 'center',
-        }}
-      >
-        <Text type="supporting" color="secondary" size="sm">
-          © {CURRENT_YEAR} OJT Tracker. All rights reserved.
-        </Text>
-      </footer>
-    </div>
+          Sign In
+        </button>
+      </div>
+    </AuthSplitLayout>
   );
 }

@@ -170,7 +170,7 @@ export async function registerUser({
       password,
       password_confirmation: effectiveConfirmation,
       school_id: effectiveSchoolId,
-      student_id: effectiveStudentId,
+      student_id: effectiveStudentId || null,
       required_hours: Number(requiredHours) || 600,
     };
 
@@ -343,13 +343,79 @@ export async function resetPassword({ token, email, password, password_confirmat
 }
 
 /**
- * Resends email verification notification via POST /api/email/verification-notification.
+ * Verifies an email verification link via GET /api/email/verify/{id}/{hash}.
+ * Works with or without an existing authenticated browser session.
  */
-export async function resendVerificationEmail() {
+export async function verifyEmailLink({ id, hash, expires, signature }) {
+  if (!id || !hash || !signature) {
+    return {
+      success: false,
+      status: 'invalid',
+      error: 'Invalid verification link.',
+    };
+  }
+
   try {
-    const res = await apiClient.post('/api/email/verification-notification', {});
-    return { success: true, message: res?.message || 'Verification email resent.' };
+    const query = new URLSearchParams();
+    if (expires) query.set('expires', String(expires));
+    if (signature) query.set('signature', String(signature));
+    query.set('format', 'json');
+
+    const res = await apiClient.get(
+      `/api/email/verify/${encodeURIComponent(id)}/${encodeURIComponent(hash)}?${query.toString()}`
+    );
+
+    const status = res?.status || 'verified';
+    if (status === 'verified' || status === 'already_verified') {
+      updateCurrentUserSession({
+        isEmailVerified: true,
+        emailVerifiedAt: new Date().toISOString(),
+        ...(typeof res?.onboarding_completed === 'boolean'
+          ? { onboardingCompleted: res.onboarding_completed }
+          : {}),
+        ...(typeof res?.onboarding_step === 'number'
+          ? { onboardingStep: res.onboarding_step }
+          : {}),
+      });
+    }
+
+    return {
+      success: true,
+      status,
+      email: res?.email || null,
+      onboardingCompleted: res?.onboarding_completed,
+      onboardingStep: res?.onboarding_step,
+      message: res?.message || 'Your email address has been successfully verified!',
+    };
   } catch (err) {
-    return { success: false, error: err.message || 'Failed to resend verification email.' };
+    const errMsg = String(err?.message || '').toLowerCase();
+    const isExpired = errMsg.includes('expired');
+    return {
+      success: false,
+      status: isExpired ? 'expired' : err?.status === 403 ? 'invalid' : 'failed',
+      error: err?.message || 'Verification failed.',
+    };
+  }
+}
+
+/**
+ * Resends email verification notification via POST /api/email/verification-notification.
+ * Supports both authenticated sessions and unauthenticated requests with an email parameter.
+ */
+export async function resendVerificationEmail(email = '') {
+  try {
+    const trimmedEmail = String(email || '').trim().toLowerCase();
+    const payload = trimmedEmail ? { email: trimmedEmail } : {};
+    const res = await apiClient.post('/api/email/verification-notification', payload);
+    return {
+      success: true,
+      status: res?.status || 'sent',
+      message: res?.message || 'Verification link sent.',
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err?.message || 'Failed to resend verification email.',
+    };
   }
 }

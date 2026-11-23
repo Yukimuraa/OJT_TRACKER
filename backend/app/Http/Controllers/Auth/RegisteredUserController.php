@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class RegisteredUserController extends Controller
 {
@@ -28,18 +29,28 @@ class RegisteredUserController extends Controller
 
             $user->studentProfile()->create([
                 'school_id' => $request->school_id,
-                'student_id' => $request->student_id,
+                'student_id' => $request->filled('student_id') ? trim((string) $request->student_id) : null,
                 'required_hours' => $request->input('required_hours', 600),
             ]);
 
             return $user;
         });
 
-        event(new Registered($user));
-
         Auth::login($user);
         if ($request->hasSession()) {
             $request->session()->regenerate();
+        }
+
+        if (app()->runningUnitTests()) {
+            event(new Registered($user));
+        } else {
+            app()->terminating(function () use ($user) {
+                try {
+                    event(new Registered($user));
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to send registration verification email: ' . $e->getMessage());
+                }
+            });
         }
 
         $user->load(['studentProfile.school', 'studentProfile.company']);

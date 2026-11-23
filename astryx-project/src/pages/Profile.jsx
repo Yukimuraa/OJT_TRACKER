@@ -131,8 +131,8 @@ function EditProfileDialog({ isOpen, onOpenChange, profile, onSave }) {
           width="100%"
         />
         <TextInput
-          label="Student ID Number"
-          isRequired
+          label="Student ID Number (Optional)"
+          placeholder="Enter your student ID"
           value={formData.studentId || ''}
           onChange={(val) => setFormData((p) => ({ ...p, studentId: val }))}
           width="100%"

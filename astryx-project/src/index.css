@@ -780,3 +780,558 @@ html[data-theme="dark"] .ojt-ios-settings-row:active {
   }
 }
 
+/* ============================================================================
+   Split-Screen Authentication UI (Login & Register) — Neutral SaaS System
+   ============================================================================ */
+.ojt-auth-split-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  background-color: #FCFCFB;
+  color: #111111;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+/* Left Panel — Mobbin-Style Angled Infinite Vertical Marquee Showcase (Desktop & Tablet) */
+.ojt-auth-brand-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  padding: 0;
+  background-color: #161616;
+  color: #FCFCFB;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle dark edge vignette so phones fill all corners cleanly while framing the split seam */
+.ojt-auth-brand-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  box-shadow: inset -18px 0 36px -14px rgba(0, 0, 0, 0.55);
+}
+
+.ojt-auth-brand-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ojt-auth-brand-orb-1 {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  right: -140px;
+  top: -120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+/* Diagonal Rotated Three-Column Infinite Vertical Marquee Stage (fills all corners edge-to-edge) */
+.ojt-showcase-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: 852px;
+  height: 190vh;
+  transform: translate(-50%, -50%) rotate(-26deg);
+  display: grid;
+  grid-template-columns: repeat(3, 272px);
+  gap: 18px;
+  align-items: flex-start;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.ojt-marquee-col {
+  width: 272px;
+  height: 100%;
+  position: relative;
+}
+
+.ojt-marquee-track {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  will-change: transform;
+}
+
+.ojt-marquee-track-up {
+  animation: ojtMarqueeUp 110s linear infinite;
+}
+
+.ojt-marquee-track-down {
+  animation: ojtMarqueeDown 125s linear infinite;
+}
+
+.ojt-marquee-track-up-slow {
+  animation: ojtMarqueeUp 140s linear infinite;
+}
+
+.ojt-marquee-group {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Full-height iPhone mockup matching the exact 412x813 (~1:1.97) aspect ratio of the reference screenshots */
+.ojt-phone-frame {
+  position: relative;
+  width: 272px;
+  height: 536px;
+  background-color: #0F172A;
+  border-radius: 40px;
+  padding: 8px;
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.ojt-phone-screen {
+  width: 100%;
+  height: 100%;
+  background-color: #FFFFFF;
+  color: #0F172A;
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.ojt-phone-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px 6px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0F172A;
+  flex-shrink: 0;
+}
+
+.ojt-phone-island {
+  width: 74px;
+  height: 20px;
+  background-color: #090D16;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 7px;
+  box-sizing: border-box;
+}
+
+.ojt-phone-island-lens {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #1E293B;
+}
+
+@keyframes ojtMarqueeUp {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+@keyframes ojtMarqueeDown {
+  0% {
+    transform: translate3d(0, -50%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ojt-marquee-track-up,
+  .ojt-marquee-track-down,
+  .ojt-marquee-track-up-slow {
+    animation: none !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* Right Panel — Branding Header + Authentication Form */
+.ojt-auth-form-panel {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  min-width: 0;
+  background-color: #FCFCFB;
+  padding: 24px clamp(18px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+.ojt-auth-right-brand-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #EAEAE6;
+}
+
+.ojt-auth-mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E5E5E3;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.ojt-auth-desktop-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ojt-auth-form-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 20px 0;
+  box-sizing: border-box;
+}
+
+.ojt-auth-form-container {
+  width: 100%;
+  max-width: 420px;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Form Fields */
+.ojt-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ojt-auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.ojt-auth-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #171717;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ojt-auth-optional-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #737373;
+  background-color: #F2F2EF;
+  border: 1px solid #E5E5E2;
+  padding: 1px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.ojt-auth-required-mark {
+  color: #DC2626;
+  font-weight: 700;
+}
+
+.ojt-auth-input-wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ojt-auth-input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 54px;
+  padding: 0 16px;
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.5;
+  color: #111111;
+  background-color: #FFFFFF;
+  border: 1.5px solid #D4D4D0;
+  border-radius: 12px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ojt-auth-input::placeholder {
+  color: #9A9A96;
+}
+
+.ojt-auth-input:hover:not(:disabled):not(.is-error) {
+  border-color: #A3A39E;
+}
+
+.ojt-auth-input:focus {
+  border-color: #171717;
+  box-shadow: 0 0 0 3.5px rgba(23, 23, 23, 0.09);
+}
+
+.ojt-auth-input.has-toggle {
+  padding-right: 52px;
+}
+
+.ojt-auth-input.is-error {
+  border-color: #DC2626;
+}
+
+.ojt-auth-input.is-error:focus {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3.5px rgba(220, 38, 38, 0.12);
+}
+
+.ojt-auth-input.is-valid {
+  border-color: #16A34A;
+}
+
+.ojt-auth-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #666662;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ojt-auth-toggle-btn:hover {
+  color: #111111;
+  background-color: rgba(23, 23, 23, 0.06);
+}
+
+.ojt-auth-toggle-btn:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 1px;
+  color: #111111;
+}
+
+.ojt-auth-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.ojt-auth-feedback.is-error {
+  color: #DC2626;
+}
+
+.ojt-auth-feedback.is-success {
+  color: #15803D;
+}
+
+/* Interactive Password Requirements Box */
+.ojt-auth-req-box {
+  background-color: #F6F6F3;
+  border: 1px solid #E5E5E0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.ojt-auth-req-box.is-all-met {
+  border-color: rgba(22, 163, 74, 0.35);
+  background-color: rgba(22, 163, 74, 0.04);
+}
+
+.ojt-auth-req-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #666662;
+  transition: color 0.16s ease;
+}
+
+.ojt-auth-req-item.is-met {
+  color: #15803D;
+  font-weight: 500;
+}
+
+/* Primary & Secondary Auth Buttons */
+.ojt-auth-primary-btn {
+  width: 100%;
+  height: 54px;
+  border-radius: 12px;
+  border: none;
+  background-color: #141413;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.16s ease, transform 0.1s ease, opacity 0.16s ease;
+  box-sizing: border-box;
+}
+
+.ojt-auth-primary-btn:hover:not(:disabled) {
+  background-color: #262624;
+}
+
+.ojt-auth-primary-btn:active:not(:disabled) {
+  transform: scale(0.995);
+}
+
+.ojt-auth-primary-btn:focus-visible {
+  outline: 2px solid #141413;
+  outline-offset: 2px;
+}
+
+.ojt-auth-primary-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ojt-auth-link-btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: #141413;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ojt-auth-link-btn:hover {
+  color: #40403E;
+}
+
+@media (min-width: 769px) and (max-width: 1080px) {
+  .ojt-auth-split-shell {
+    grid-template-columns: 45% 55%;
+  }
+
+  .ojt-auth-brand-panel {
+    width: 45%;
+  }
+
+  .ojt-showcase-stage {
+    transform: translate(-50%, -50%) rotate(-26deg) scale(0.78);
+  }
+
+  .ojt-marquee-track-up {
+    animation-duration: 120s;
+  }
+
+  .ojt-marquee-track-down {
+    animation-duration: 135s;
+  }
+
+  .ojt-marquee-track-up-slow {
+    animation-duration: 150s;
+  }
+
+  .ojt-auth-form-panel {
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ojt-auth-split-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .ojt-auth-brand-panel {
+    display: none !important;
+  }
+
+  .ojt-auth-form-panel {
+    grid-column: 1;
+    padding: 16px 16px 32px 16px;
+    justify-content: flex-start;
+  }
+
+  .ojt-auth-form-center {
+    align-items: flex-start;
+    padding: 12px 0 20px 0;
+  }
+}
+
+

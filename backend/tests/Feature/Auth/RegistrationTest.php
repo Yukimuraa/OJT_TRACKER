@@ -70,6 +70,46 @@ class RegistrationTest extends TestCase
         Event::assertDispatched(Registered::class);
     }
 
+    public function test_new_students_can_register_without_student_id(): void
+    {
+        Event::fake([Registered::class]);
+
+        $school = School::create([
+            'name' => 'Technological University of the Philippines',
+            'code' => 'TUP',
+            'address' => 'Ayala Blvd, Ermita, Manila',
+        ]);
+
+        $response = $this->postJson('/api/register', [
+            'name' => 'Maria Clara',
+            'email' => 'maria@example.com',
+            'password' => 'SecurePass123!',
+            'password_confirmation' => 'SecurePass123!',
+            'school_id' => $school->id,
+            'student_id' => '',
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('student_profiles', [
+            'school_id' => $school->id,
+            'student_id' => null,
+        ]);
+
+        // A second student in the same school can also register without a student_id
+        $this->postJson('/api/logout');
+
+        $secondResponse = $this->postJson('/api/register', [
+            'name' => 'Crisostomo Ibarra',
+            'email' => 'ibarra@example.com',
+            'password' => 'SecurePass123!',
+            'password_confirmation' => 'SecurePass123!',
+            'school_id' => $school->id,
+        ]);
+
+        $secondResponse->assertStatus(201);
+    }
+
     public function test_registration_fails_with_validation_errors(): void
     {
         $response = $this->postJson('/api/register', [
@@ -82,7 +122,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['name', 'email', 'password', 'school_id', 'student_id']);
+            ->assertJsonValidationErrors(['name', 'email', 'password', 'school_id']);
     }
 
     public function test_duplicate_email_is_rejected(): void

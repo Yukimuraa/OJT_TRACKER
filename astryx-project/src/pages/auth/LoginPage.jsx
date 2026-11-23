@@ -1,21 +1,13 @@
 import React, { useState } from 'react';
-import { VStack } from '@astryxdesign/core/VStack';
-import { HStack } from '@astryxdesign/core/HStack';
-import { Card } from '@astryxdesign/core/Card';
-import { Heading } from '@astryxdesign/core/Heading';
-import { Text } from '@astryxdesign/core/Text';
-import { TextInput } from '@astryxdesign/core/TextInput';
-import { InputGroup } from '@astryxdesign/core/InputGroup';
-import { Button } from '@astryxdesign/core/Button';
-import { Icon } from '@astryxdesign/core/Icon';
-import { Divider } from '@astryxdesign/core/Divider';
 import { Banner } from '@astryxdesign/core/Banner';
-import { GraduationCapIcon } from '../../components/common/BrandIcons';
+import {
+  AuthSplitLayout,
+  AuthInput,
+  AuthPasswordInput,
+} from '../../components/auth/AuthFormControls';
 import { isOnboardingCompleted } from '../../services/onboardingService';
 import { fetchStudentProfile } from '../../services/profileService';
 import { loginUser } from '../../services/authService';
-
-const CURRENT_YEAR = new Date().getFullYear();
 
 export function LoginPage({ onNavigate }) {
   const [email, setEmail] = useState(() => {
@@ -51,7 +43,11 @@ export function LoginPage({ onNavigate }) {
     setIsSubmitting(true);
 
     try {
-      const result = await loginUser({ email: trimmedEmail, password });
+      const result = await loginUser({
+        email: trimmedEmail,
+        password,
+        remember: true,
+      });
       setIsSubmitting(false);
 
       if (!result.success) {
@@ -71,7 +67,6 @@ export function LoginPage({ onNavigate }) {
         return;
       }
 
-      // Successful verified login:
       // Retrieve backend profile before routing to ensure onboarding and requirements are restored on any device
       let isCompleted = Boolean(
         result.user?.onboardingCompleted ||
@@ -118,176 +113,126 @@ export function LoginPage({ onNavigate }) {
   };
 
   return (
-    <div className="ojt-landing-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Top Header Bar */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-background-surface)',
-          padding: '16px 24px',
-        }}
-      >
-        <div className="ojt-landing-container">
-          <HStack justify="between" align="center">
-            <HStack
-              gap={2}
-              align="center"
-              style={{ cursor: 'pointer' }}
-              onClick={() => onNavigate?.('landing')}
+    <AuthSplitLayout onNavigate={onNavigate}>
+      {/* Form Heading & Supporting Text */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h1
+          style={{
+            fontSize: 'clamp(1.6rem, 2.4vw, 1.95rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.025em',
+            color: '#111111',
+            margin: 0,
+            lineHeight: 1.2,
+          }}
+        >
+          Welcome back
+        </h1>
+        <p
+          style={{
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: '#666662',
+            margin: 0,
+          }}
+        >
+          Sign in to continue tracking your OJT progress.
+        </p>
+      </div>
+
+      {errors.general && (
+        <Banner
+          status="error"
+          title={errors.general}
+        />
+      )}
+
+      <form onSubmit={handleSubmit} noValidate style={{ width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
+          <AuthInput
+            id="login-email"
+            name="email"
+            type="email"
+            label="Email Address"
+            required
+            autoComplete="email"
+            placeholder="name@school.edu.ph"
+            value={email}
+            onChange={(val) => {
+              setEmail(val);
+              if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+            }}
+            error={errors.email}
+            disabled={isSubmitting}
+          />
+
+          <AuthPasswordInput
+            id="login-password"
+            name="password"
+            label="Password"
+            required
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(val) => {
+              setPassword(val);
+              if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
+            }}
+            showPassword={showPassword}
+            onToggleShow={() => setShowPassword((prev) => !prev)}
+            error={errors.password}
+            disabled={isSubmitting}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              marginTop: -4,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => onNavigate?.('forgot-password')}
+              className="ojt-auth-link-btn"
             >
-              <Icon icon={GraduationCapIcon} size="md" color="accent" />
-              <Heading level={3}>OJT Tracker</Heading>
-            </HStack>
+              Forgot Password?
+            </button>
+          </div>
 
-            <Button
-              label="Back to Home"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon="chevronLeft" size="sm" />}
-              onClick={() => onNavigate?.('landing')}
-            />
-          </HStack>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="ojt-auth-primary-btn"
+          >
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
+          </button>
         </div>
-      </header>
+      </form>
 
-      {/* Main Login Content */}
-      <main
+      <div
         style={{
-          flex: 1,
+          borderTop: '1px solid #E5E5E0',
+          paddingTop: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 16px',
+          gap: 6,
+          flexWrap: 'wrap',
+          fontSize: 14,
+          color: '#666662',
         }}
       >
-        <Card
-          elevation="low"
-          padding={6}
-          style={{ width: '100%', maxWidth: 460 }}
+        <span>Don't have an account?</span>
+        <button
+          type="button"
+          onClick={() => onNavigate?.('register')}
+          className="ojt-auth-link-btn"
         >
-          <VStack gap={6}>
-            <VStack gap={2} align="center">
-              <Heading level={1} align="center">
-                Welcome Back
-              </Heading>
-              <Text type="body" color="secondary" align="center">
-                Sign in to continue tracking your OJT training hours.
-              </Text>
-            </VStack>
-
-            {errors.general && (
-              <Banner
-                status="error"
-                title={errors.general}
-              />
-            )}
-
-            <form onSubmit={handleSubmit} noValidate>
-              <VStack gap={4}>
-                <TextInput
-                  type="email"
-                  label="Email Address"
-                  isRequired
-                  placeholder="name@school.edu.ph"
-                  value={email}
-                  onChange={(val) => {
-                    setEmail(val);
-                    if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
-                  }}
-                  status={errors.email ? { type: 'error', message: errors.email } : undefined}
-                  width="100%"
-                />
-
-                <InputGroup
-                  label="Password"
-                  isRequired
-                  status={errors.password ? { type: 'error', message: errors.password } : undefined}
-                >
-                  <TextInput
-                    type={showPassword ? 'text' : 'password'}
-                    label="Password"
-                    isLabelHidden
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(val) => {
-                      setPassword(val);
-                      if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
-                    }}
-                    width="100%"
-                  />
-                  <Button
-                    label={showPassword ? 'Hide' : 'Show'}
-                    variant="ghost"
-                    onClick={() => setShowPassword(!showPassword)}
-                  />
-                </InputGroup>
-
-                <HStack justify="end">
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('forgot-password')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      color: '#10b981',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      outline: 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.textDecoration = 'underline';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.textDecoration = 'none';
-                    }}
-                  >
-                    Forgot Password?
-                  </button>
-                </HStack>
-
-                <Button
-                  label="Log In"
-                  variant="primary"
-                  size="lg"
-                  type="submit"
-                  isLoading={isSubmitting}
-                  width="100%"
-                />
-              </VStack>
-            </form>
-
-            <Divider variant="subtle" />
-
-            <HStack justify="center" align="center" gap={1}>
-              <Text size="sm" color="secondary">
-                Don't have an account?
-              </Text>
-              <Button
-                label="Sign Up"
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate?.('register')}
-              />
-            </HStack>
-          </VStack>
-        </Card>
-      </main>
-
-      {/* Footer */}
-      <footer
-        style={{
-          borderTop: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-background-surface)',
-          padding: '16px 24px',
-          textAlign: 'center',
-        }}
-      >
-        <Text type="supporting" color="secondary" size="sm">
-          © {CURRENT_YEAR} OJT Tracker. All rights reserved.
-        </Text>
-      </footer>
-    </div>
+          Create Account
+        </button>
+      </div>
+    </AuthSplitLayout>
   );
 }

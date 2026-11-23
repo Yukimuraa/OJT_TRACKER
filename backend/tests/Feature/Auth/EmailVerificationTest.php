@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
@@ -40,11 +39,130 @@ class EmailVerificationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
+                'status' => 'verified',
                 'message' => 'Email verified successfully.',
             ]);
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_email_can_be_verified_without_authenticated_session(): void
+    {
+        Event::fake([Verified::class]);
+
+        $user = User::create([
+            'name' => 'Cross Browser User',
+            'email' => 'crossbrowser@example.com',
+            'password' => 'secret123',
+            'email_verified_at' => null,
+        ]);
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(60),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        // No actingAs() — simulates opening the Gmail link in a different browser or private session
+        $response = $this->getJson($verificationUrl);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'status' => 'verified',
+                'verified' => true,
+                'message' => 'Email verified successfully.',
+            ]);
+
+        Event::assertDispatched(Verified::class);
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_browser_click_redirects_to_frontend_verify_email_page(): void
+    {
+        $user = User::create([
+            'name' => 'Gmail Click User',
+            'email' => 'gmailclick@example.com',
+            'password' => 'secret123',
+            'email_verified_at' => null,
+        ]);
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(60),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        // Standard HTML browser GET (not getJson)
+        $response = $this->get($verificationUrl);
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('/verify-email?status=verified', (string) $response->headers->get('Location'));
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_expired_verification_link_is_rejected(): void
+    {
+        $user = User::create([
+            'name' => 'Expired Link User',
+            'email' => 'expired@example.com',
+            'password' => 'secret123',
+            'email_verified_at' => null,
+        ]);
+
+        $expiredUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->subMinutes(10),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->getJson($expiredUrl);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'status' => 'expired',
+                'verified' => false,
+            ]);
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_tampered_signature_is_rejected(): void
+    {
+        $user = User::create([
+            'name' => 'Tampered Link User',
+            'email' => 'tampered@example.com',
+            'password' => 'secret123',
+            'email_verified_at' => null,
+        ]);
+
+        $validUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(60),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $tamperedUrl = $validUrl . 'tampered';
+
+        $response = $this->getJson($tamperedUrl);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'status' => 'invalid',
+                'verified' => false,
+            ]);
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
     public function test_email_cannot_be_verified_with_invalid_hash(): void
@@ -65,7 +183,7 @@ class EmailVerificationTest extends TestCase
             ]
         );
 
-        $response = $this->actingAs($user, 'web')->getJson($verificationUrl);
+        $response = $this->getJson($verificationUrl);
 
         $response->assertStatus(403);
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
@@ -96,7 +214,7 @@ class EmailVerificationTest extends TestCase
             ]
         );
 
-        // User B attempts to access User A's verification URL
+        // User B attempts to access User A's verification URL while authenticated as User B
         $response = $this->actingAs($userB, 'web')->getJson($verificationUrl);
 
         $response->assertStatus(403);
@@ -121,10 +239,11 @@ class EmailVerificationTest extends TestCase
             ]
         );
 
-        $response = $this->actingAs($user, 'web')->getJson($verificationUrl);
+        $response = $this->getJson($verificationUrl);
 
         $response->assertStatus(200)
             ->assertJson([
+                'status' => 'already_verified',
                 'message' => 'Email is already verified.',
             ]);
     }

@@ -17,6 +17,7 @@ import { IOSSessionCard } from '../components/common/IOSWheelPicker';
 import { TextArea } from '@astryxdesign/core/TextArea';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Divider } from '@astryxdesign/core/Divider';
+import { Pagination } from '@astryxdesign/core/Pagination';
 import { useTraining } from '../hooks/useTraining';
 import { GraduationCapIcon, PrinterIcon } from '../components/common/BrandIcons';
 import { DttrPrintModal } from '../components/timelogs/DttrPrintModal';
@@ -821,6 +822,8 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
   const [feedback, setFeedback] = useState(null);
 
   const [sort, setSort] = useState([{ sortKey: 'date', direction: 'descending' }]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const handleToggleSort = (key) => {
     setSort((prev) => {
@@ -829,6 +832,7 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
       }
       return [{ sortKey: key, direction: 'descending' }];
     });
+    setCurrentPage(1);
   };
 
   const sortedRecords = useMemo(() => {
@@ -849,6 +853,25 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
       return 0;
     });
   }, [records, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIdx = (safePage - 1) * pageSize;
+  const endIdx = Math.min(startIdx + pageSize, sortedRecords.length);
+
+  const paginatedRecords = useMemo(() => {
+    return sortedRecords.slice(startIdx, startIdx + pageSize);
+  }, [sortedRecords, startIdx, pageSize]);
+
+  const handlePageChange = (nextPage) => {
+    const clamped = Math.min(Math.max(1, nextPage), totalPages);
+    setCurrentPage(clamped);
+  };
+
+  const handlePageSizeChange = (nextSize) => {
+    setPageSize(nextSize);
+    setCurrentPage(1);
+  };
 
   const handleOpenNewLog = () => {
     setRecordToEdit(null);
@@ -1070,14 +1093,14 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
                       </tr>
                     </thead>
                     <tbody>
-                      {sortedRecords.map((row, idx) => {
+                      {paginatedRecords.map((row, idx) => {
                         const morning = row.morningSession?.attended;
                         const afternoon = row.afternoonSession?.attended;
                         return (
                           <tr
                             key={row.id || idx}
                             style={{
-                              borderBottom: idx < sortedRecords.length - 1 ? '1px solid #f1f5f9' : 'none',
+                              borderBottom: idx < paginatedRecords.length - 1 ? '1px solid #f1f5f9' : 'none',
                               transition: 'background-color 0.15s',
                             }}
                           >
@@ -1238,7 +1261,7 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
                     boxSizing: 'border-box',
                   }}
                 >
-                  {sortedRecords.map((row) => {
+                  {paginatedRecords.map((row) => {
                     const morning = row.morningSession?.attended;
                     const afternoon = row.afternoonSession?.attended;
                     return (
@@ -1385,6 +1408,43 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Pagination Footer */}
+                <div
+                  className="ojt-timelogs-pagination"
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    paddingTop: 12,
+                    borderTop: '1px solid #e2e8f0',
+                    width: '100%',
+                    maxWidth: '100%',
+                    minWidth: 0,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <Text type="supporting" size="sm" color="secondary">
+                    Showing {startIdx + 1}–{endIdx} of {sortedRecords.length} record{sortedRecords.length === 1 ? '' : 's'}
+                  </Text>
+                  <div style={{ maxWidth: '100%', minWidth: 0 }}>
+                    <Pagination
+                      page={safePage}
+                      onChange={handlePageChange}
+                      totalItems={sortedRecords.length}
+                      pageSize={pageSize}
+                      pageSizeOptions={[5, 10, 20, 50]}
+                      onPageSizeChange={handlePageSizeChange}
+                      variant="pages"
+                      size="sm"
+                      siblingCount={1}
+                      label="Time logs pagination"
+                      data-testid="timelogs-pagination"
+                    />
+                  </div>
                 </div>
               </>
             )}

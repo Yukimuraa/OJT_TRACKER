@@ -31,7 +31,7 @@ class UpdateStudentProfileRequest extends FormRequest
             'company_id'            => ['nullable', 'integer', 'exists:companies,id'],
             'student_id'            => [
                 'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 Rule::unique('student_profiles', 'student_id')
@@ -102,6 +102,11 @@ class UpdateStudentProfileRequest extends FormRequest
         // Normalise working_days to lowercase
         if ($this->has('working_days') && is_array($this->input('working_days'))) {
             $merge['working_days'] = array_map('strtolower', $this->input('working_days'));
+        }
+
+        if ($this->has('student_id')) {
+            $trimmed = trim((string) $this->input('student_id'));
+            $merge['student_id'] = $trimmed !== '' ? $trimmed : null;
         }
 
         if (!empty($merge)) {

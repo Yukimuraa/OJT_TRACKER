@@ -16,6 +16,7 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { OnboardingWizard } from './pages/onboarding/OnboardingWizard';
 import { PrivacyPolicyPage } from './pages/legal/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/legal/TermsOfServicePage';
@@ -29,14 +30,6 @@ import { PwaStatusBanners } from './components/pwa/PwaStatusBanners';
 import { useDarkMode } from './hooks/useDarkMode';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
-const PAGE_TITLES = {
-  dashboard: 'Dashboard',
-  timelogs: 'Time Logs',
-  reports: 'Reports',
-  profile: 'Profile',
-  settings: 'Settings',
-};
-
 const PROTECTED_PAGES = ['dashboard', 'timelogs', 'reports', 'profile', 'settings', 'onboarding'];
 
 function getInitialPage() {
@@ -46,6 +39,7 @@ function getInitialPage() {
     if (path === '/login') return 'login';
     if (path === '/forgot-password') return 'forgot-password';
     if (path === '/reset-password') return 'reset-password';
+    if (path === '/verify-email' || path === '/email/verify') return 'verify-email';
     if (path === '/privacy' || path === '/privacy-policy') return 'privacy';
     if (path === '/terms' || path === '/terms-of-service') return 'terms';
     if (path === '/about') return 'about';
@@ -146,6 +140,7 @@ export function App() {
       else if (page === 'login') targetPath = '/login';
       else if (page === 'forgot-password') targetPath = '/forgot-password';
       else if (page === 'reset-password') targetPath = '/reset-password';
+      else if (page === 'verify-email') targetPath = '/verify-email';
       else if (page === 'onboarding') targetPath = '/onboarding';
       else if (page === 'privacy') targetPath = '/privacy';
       else if (page === 'terms') targetPath = '/terms';
@@ -203,6 +198,15 @@ export function App() {
       <Theme theme={themes[defaultThemeSlug]} mode="light">
         <PwaStatusBanners />
         <ResetPasswordPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'verify-email') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <VerifyEmailPage onNavigate={navigateTo} />
       </Theme>
     );
   }
@@ -290,12 +294,7 @@ export function App() {
           contentPadding={4}
           mobileNav={false}
           sideNav={<Sidebar activePage={activePage} onNavigate={navigateTo} />}
-          topNav={
-            <TopNavigation
-              pageTitle={PAGE_TITLES[activePage] || 'OJT Tracker'}
-              onNavigate={navigateTo}
-            />
-          }
+          topNav={<TopNavigation onNavigate={navigateTo} />}
         >
           <PwaStatusBanners />
           <div className="ojt-authenticated-content">

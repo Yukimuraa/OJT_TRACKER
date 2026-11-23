@@ -44,6 +44,15 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])
     ->middleware('throttle:5,1')
     ->name('password.update');
 
+// Public Signed Email Verification Routes (works across browsers/devices without requiring an active session)
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware('throttle:6,1')
+    ->name('verification.verify');
+
+Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+    ->middleware('throttle:6,1')
+    ->name('verification.send');
+
 // Protected Application Routes (Sanctum SPA Cookie Auth)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
@@ -51,15 +60,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user', [CurrentUserController::class, 'show'])
         ->name('user.profile');
-
-    // Email Verification Routes
-    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
-    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
 
     // Student Profile
     Route::get('/student-profile', [StudentProfileController::class, 'show'])

@@ -25,7 +25,7 @@ class StudentProfileController extends Controller
             $defaultSchool = \App\Models\School::first();
             $profile = $user->studentProfile()->create([
                 'school_id' => $defaultSchool?->id ?? 1,
-                'student_id' => 'STU-' . $user->id,
+                'student_id' => null,
                 'required_hours' => 600,
                 'hours_per_day' => 8.00,
                 'onboarding_completed' => false,
@@ -54,7 +54,7 @@ class StudentProfileController extends Controller
             $profile = new StudentProfile([
                 'user_id' => $user->id,
                 'school_id' => $validated['school_id'] ?? $defaultSchool?->id ?? 1,
-                'student_id' => $validated['student_id'] ?? 'STU-' . $user->id,
+                'student_id' => $validated['student_id'] ?? null,
             ]);
         }
 

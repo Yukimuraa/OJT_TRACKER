@@ -15,7 +15,13 @@ import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Divider } from '@astryxdesign/core/Divider';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Icon } from '@astryxdesign/core/Icon';
-import { GraduationCapIcon } from '../../components/common/BrandIcons';
+import { GraduationCapIcon, CheckCircleIcon, AlertCircleIcon, RefreshCwIcon } from '../../components/common/BrandIcons';
+import { BrandLogo } from '../../components/auth/AuthFormControls';
+import {
+  getCurrentUser,
+  fetchCurrentUser,
+  resendVerificationEmail,
+} from '../../services/authService';
 import {
   DAYS_OF_WEEK,
   loadOnboardingData,
@@ -50,6 +56,96 @@ export function OnboardingWizard({ onComplete, initialStep = null, initialData =
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Email verification notice state (non-blocking during onboarding)
+  const [sessionUser, setSessionUser] = useState(() => getCurrentUser());
+  const [verifyState, setVerifyState] = useState({
+    resending: false,
+    checking: false,
+    feedback: null,
+    error: null,
+  });
+
+  const isEmailVerified = Boolean(sessionUser?.isEmailVerified || sessionUser?.emailVerifiedAt);
+  const studentEmail = sessionUser?.email || '';
+
+  const handleCheckVerificationStatus = async (silent = false) => {
+    if (!silent) {
+      setVerifyState((prev) => ({ ...prev, checking: true, feedback: null, error: null }));
+    }
+    try {
+      const refreshedUser = await fetchCurrentUser();
+      const latestUser = refreshedUser || getCurrentUser();
+      if (latestUser) {
+        setSessionUser(latestUser);
+      }
+      if (!silent) {
+        if (latestUser?.isEmailVerified || latestUser?.emailVerifiedAt) {
+          setVerifyState({
+            resending: false,
+            checking: false,
+            feedback: 'Your email address has been verified!',
+            error: null,
+          });
+        } else {
+          setVerifyState({
+            resending: false,
+            checking: false,
+            feedback: 'Still waiting for email verification. Please click the verification link sent to your inbox.',
+            error: null,
+          });
+        }
+      }
+    } catch {
+      if (!silent) {
+        setVerifyState((prev) => ({
+          ...prev,
+          checking: false,
+          error: 'Could not check verification status right now.',
+        }));
+      }
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setVerifyState((prev) => ({ ...prev, resending: true, feedback: null, error: null }));
+    const res = await resendVerificationEmail(studentEmail);
+    if (res.success) {
+      if (res.status === 'already_verified') {
+        await handleCheckVerificationStatus(true);
+        setVerifyState({
+          resending: false,
+          checking: false,
+          feedback: 'Your email address is already verified!',
+          error: null,
+        });
+      } else {
+        setVerifyState({
+          resending: false,
+          checking: false,
+          feedback: `A fresh verification link has been sent to ${studentEmail || 'your email'}.`,
+          error: null,
+        });
+      }
+    } else {
+      setVerifyState({
+        resending: false,
+        checking: false,
+        feedback: null,
+        error: res.error || 'Could not resend verification email. Please try again shortly.',
+      });
+    }
+  };
+
+  // Automatically re-check verification status when the student returns to this tab after clicking Gmail link
+  useEffect(() => {
+    if (isEmailVerified) return;
+    const onFocus = () => {
+      handleCheckVerificationStatus(true);
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [isEmailVerified]);
 
   // Restore remote onboarding state from backend across browsers/devices
   useEffect(() => {
@@ -283,7 +379,198 @@ export function OnboardingWizard({ onComplete, initialStep = null, initialData =
         }}
       >
         <div style={{ width: '100%', maxWidth: 760 }}>
-          <VStack gap={6}>
+          <VStack gap={5}>
+            {/* Non-Blocking Email Verification Notice */}
+            {!isEmailVerified ? (
+              <div
+                id="ojt-onboarding-verification-notice"
+                data-verified="false"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1.5px solid #E5E5E0',
+                  borderRadius: 16,
+                  padding: '18px 20px',
+                  boxShadow: '0 2px 10px rgba(17, 17, 17, 0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 260px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: '#111111',
+                          letterSpacing: '-0.01em',
+                        }}
+                      >
+                        Please verify your email address.
+                      </span>
+                      <span
+                        data-testid="verification-status-badge"
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          color: '#92400E',
+                          backgroundColor: '#FEF3C7',
+                          border: '1px solid #FDE68A',
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                        }}
+                      >
+                        Pending Verification
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13.5, color: '#52524E', margin: 0, lineHeight: 1.5 }}>
+                      We've sent a verification link to your email
+                      {studentEmail ? (
+                        <>
+                          {' '}
+                          (<strong style={{ color: '#111111' }}>{studentEmail}</strong>)
+                        </>
+                      ) : null}
+                      . You can continue setting up your OJT information while waiting for verification.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      id="ojt-onboarding-resend-verify-btn"
+                      onClick={handleResendVerification}
+                      disabled={verifyState.resending}
+                      style={{
+                        backgroundColor: '#141413',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: 9,
+                        padding: '8px 13px',
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: verifyState.resending ? 'not-allowed' : 'pointer',
+                        opacity: verifyState.resending ? 0.65 : 1,
+                      }}
+                    >
+                      {verifyState.resending ? 'Sending...' : 'Resend Verification Email'}
+                    </button>
+
+                    <button
+                      type="button"
+                      id="ojt-onboarding-check-verify-btn"
+                      onClick={() => handleCheckVerificationStatus(false)}
+                      disabled={verifyState.checking}
+                      style={{
+                        backgroundColor: '#F6F6F3',
+                        color: '#171717',
+                        border: '1px solid #D4D4D0',
+                        borderRadius: 9,
+                        padding: '8px 13px',
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: verifyState.checking ? 'not-allowed' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <RefreshCwIcon width={13} height={13} />
+                      <span>{verifyState.checking ? 'Checking...' : 'Check Status'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {verifyState.feedback && (
+                  <div
+                    role="status"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: '#15803D',
+                      backgroundColor: 'rgba(22, 163, 74, 0.06)',
+                      border: '1px solid rgba(22, 163, 74, 0.22)',
+                      borderRadius: 10,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <CheckCircleIcon width={15} height={15} style={{ flexShrink: 0 }} />
+                    <span>{verifyState.feedback}</span>
+                  </div>
+                )}
+
+                {verifyState.error && (
+                  <div
+                    role="alert"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: '#DC2626',
+                      backgroundColor: 'rgba(220, 38, 38, 0.06)',
+                      border: '1px solid rgba(220, 38, 38, 0.22)',
+                      borderRadius: 10,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <AlertCircleIcon width={15} height={15} style={{ flexShrink: 0 }} />
+                    <span>{verifyState.error}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                id="ojt-onboarding-verification-notice"
+                data-verified="true"
+                style={{
+                  backgroundColor: 'rgba(22, 163, 74, 0.06)',
+                  border: '1px solid rgba(22, 163, 74, 0.25)',
+                  borderRadius: 14,
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, fontWeight: 600, color: '#15803D' }}>
+                  <CheckCircleIcon width={16} height={16} style={{ flexShrink: 0 }} />
+                  <span>
+                    Email verified{studentEmail ? ` (${studentEmail})` : ''} — Complete your OJT setup below.
+                  </span>
+                </div>
+                <span
+                  data-testid="verification-status-badge"
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: '#15803D',
+                    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+                    padding: '2px 9px',
+                    borderRadius: 999,
+                  }}
+                >
+                  Verified
+                </span>
+              </div>
+            )}
+
             {/* Stepper Progress Bar */}
             <Card elevation="low" padding={4}>
               <Stepper activeStep={activeStep}>
