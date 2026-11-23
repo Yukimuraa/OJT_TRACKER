@@ -254,11 +254,11 @@ export function LandingNav({ onRegister, onLogin }) {
                   fontSize: '0.9375rem',
                   fontWeight: 700,
                   color: '#ffffff',
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#000000',
                   border: 'none',
                   borderRadius: 10,
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18)',
                   transition: 'all 0.15s ease',
                   minHeight: 40,
                   display: 'inline-flex',
@@ -266,10 +266,10 @@ export function LandingNav({ onRegister, onLogin }) {
                   justifyContent: 'center',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#059669';
+                  e.currentTarget.style.backgroundColor = '#1f2937';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#10b981';
+                  e.currentTarget.style.backgroundColor = '#000000';
                 }}
               >
                 Get Started
@@ -314,11 +314,11 @@ export function LandingNav({ onRegister, onLogin }) {
                   fontSize: '0.875rem',
                   fontWeight: 700,
                   color: '#ffffff',
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#000000',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18)',
                   minHeight: 38,
                   whiteSpace: 'nowrap',
                 }}

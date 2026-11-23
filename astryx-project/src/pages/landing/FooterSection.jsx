@@ -113,10 +113,17 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
                   fontSize: '0.8125rem',
                   fontWeight: 700,
                   color: '#ffffff',
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#000000',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1f2937';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#000000';
                 }}
               >
                 Create Account
@@ -193,6 +200,30 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
               >
                 How It Works
               </a>
+              <span
+                style={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 800,
+                  color: '#142b49',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  marginTop: 10,
+                }}
+              >
+                Support
+              </span>
+              <a
+                href="/help"
+                onClick={handleLink('help')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Help &amp; Support
+              </a>
             </div>
           </div>
 
@@ -262,59 +293,6 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
                 }}
               >
                 About {APP_CONFIG.shortName}
-              </a>
-              <a
-                href="/help"
-                onClick={handleLink('help')}
-                style={{
-                  fontSize: '0.9rem',
-                  color: '#64748b',
-                  textDecoration: 'none',
-                  transition: 'color 0.15s',
-                }}
-              >
-                Contact
-              </a>
-            </div>
-          </div>
-
-          {/* 4. Support Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <span
-              style={{
-                fontSize: '0.8125rem',
-                fontWeight: 800,
-                color: '#142b49',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-              }}
-            >
-              Support
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <a
-                href="/help"
-                onClick={handleLink('help')}
-                style={{
-                  fontSize: '0.9rem',
-                  color: '#64748b',
-                  textDecoration: 'none',
-                  transition: 'color 0.15s',
-                }}
-              >
-                Help &amp; Support
-              </a>
-              <a
-                href="/faq"
-                onClick={handleLink('help')}
-                style={{
-                  fontSize: '0.9rem',
-                  color: '#64748b',
-                  textDecoration: 'none',
-                  transition: 'color 0.15s',
-                }}
-              >
-                FAQ
               </a>
             </div>
           </div>
