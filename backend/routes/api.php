@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DttrTemplateController;
+use App\Http\Controllers\ProblemReportController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\SyncController;
@@ -52,6 +53,11 @@ Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 've
 Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
     ->middleware('throttle:6,1')
     ->name('verification.send');
+
+// Problem Reports (Accessible to both authenticated students & public visitors)
+Route::post('/problem-reports', [ProblemReportController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('problem-reports.store');
 
 // Protected Application Routes (Sanctum SPA Cookie Auth)
 Route::middleware('auth:sanctum')->group(function () {

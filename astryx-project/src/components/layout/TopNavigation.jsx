@@ -2,9 +2,7 @@ import React from 'react';
 import { TopNav } from '@astryxdesign/core/TopNav';
 import { HStack } from '@astryxdesign/core/HStack';
 import { IconButton } from '@astryxdesign/core/IconButton';
-import { Icon } from '@astryxdesign/core/Icon';
 import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
-import { BellIcon } from '../common/BrandIcons';
 import { UserAvatar } from '../common/UserAvatar';
 import { loadStoredProfile } from '../../services/profileService';
 import { logoutUser, getCurrentUser } from '../../services/authService';
@@ -44,12 +42,6 @@ export function TopNavigation({ onNavigate }) {
       label="Top Application Navigation"
       endContent={
         <HStack gap={2} align="center">
-          <IconButton
-            label="Notifications"
-            icon={<Icon icon={BellIcon} label="Notifications" />}
-            variant="ghost"
-            tooltip="Notifications (0 unread)"
-          />
           <DropdownMenu
             items={accountMenuItems}
             renderTrigger={(triggerProps) => (

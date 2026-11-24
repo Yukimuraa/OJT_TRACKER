@@ -173,7 +173,7 @@ export function AboutPage({ onNavigate }) {
                     <tr>
                       <td style={{ padding: '12px 16px', fontWeight: 600, color: '#64748b' }}>Publisher / Maintainer</td>
                       <td style={{ padding: '12px 16px', color: '#142b49' }}>
-                        <code>{APP_CONFIG.developer.displayName}</code>
+                        <code>JOEMARIE DAMASING</code>
                       </td>
                     </tr>
                   </tbody>
@@ -206,9 +206,9 @@ export function AboutPage({ onNavigate }) {
                 Publisher &amp; Contact Details
               </h2>
               <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 18, fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div><strong>Publisher:</strong> <code>{APP_CONFIG.developer.displayName}</code></div>
-                <div><strong>Official Website:</strong> <code>{APP_CONFIG.developer.website}</code></div>
-                <div><strong>Support &amp; Inquiries:</strong> <code>{APP_CONFIG.developer.supportEmail}</code></div>
+                <div><strong>Publisher:</strong> <code>JOEMARIE DAMASING</code></div>
+                {/* <div><strong>Official Website:</strong> <code>{APP_CONFIG.developer.website}</code></div> */}
+                <div><strong>Support &amp; Inquiries:</strong> <code>dayonmakima@gmail.com</code></div>
                 <div><strong>Copyright:</strong> &copy; {APP_CONFIG.developer.copyrightYear} {APP_CONFIG.name}. Built with care for student interns.</div>
               </div>
             </div>

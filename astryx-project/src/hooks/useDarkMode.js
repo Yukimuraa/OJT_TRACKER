@@ -78,8 +78,8 @@ export function useDarkMode() {
   }, []);
 
   const toggleDarkMode = useCallback(() => {
-    setDarkMode(!isDarkMode);
-  }, [isDarkMode, setDarkMode]);
+    setDarkMode(!getStoredDarkMode());
+  }, [setDarkMode]);
 
   return { isDarkMode, toggleDarkMode, setDarkMode };
 }

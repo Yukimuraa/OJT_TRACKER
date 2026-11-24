@@ -192,11 +192,13 @@ export function TermsOfServicePage({ onNavigate }) {
               </h2>
               <p>
                 If you have questions regarding these Terms of Service or academic use compliance, please contact:
+                
               </p>
+              
               <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 16, fontSize: '0.9rem' }}>
-                <div><strong>Legal Representative:</strong> <code>{APP_CONFIG.developer.displayName}</code></div>
-                <div><strong>Email:</strong> <code>{APP_CONFIG.developer.legalEmail}</code></div>
-                <div><strong>Governing Jurisdiction:</strong> <code>{APP_CONFIG.developer.officeAddress}</code></div>
+                <div><strong>Legal Representative:</strong> <code>JOEMARIE DAMASING</code></div>
+                <div><strong>Email:</strong> <code>dayonmakima@gmail.com</code></div>
+                {/* <div><strong>Governing Jurisdiction:</strong> <code>{APP_CONFIG.developer.officeAddress}</code></div> */}
               </div>
             </section>
 

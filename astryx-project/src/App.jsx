@@ -22,6 +22,7 @@ import { PrivacyPolicyPage } from './pages/legal/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/legal/TermsOfServicePage';
 import { AboutPage } from './pages/about/AboutPage';
 import { HelpSupportPage } from './pages/support/HelpSupportPage';
+import { ReportProblemPage } from './pages/support/ReportProblemPage';
 import { isAuthenticated, getCurrentUser, fetchCurrentUser } from './services/authService';
 import { restartReminderScheduler } from './services/reminderService';
 import { fetchStudentProfile } from './services/profileService';
@@ -44,6 +45,7 @@ function getInitialPage() {
     if (path === '/terms' || path === '/terms-of-service') return 'terms';
     if (path === '/about') return 'about';
     if (path === '/help' || path === '/faq') return 'help';
+    if (path === '/report-problem' || path === '/report-a-problem' || path === '/app/report-problem') return 'report-problem';
 
     const authed = isAuthenticated();
     if (!authed && (path.startsWith('/app') || path === '/dashboard' || path === '/onboarding' || path === '/timelogs')) {
@@ -146,6 +148,7 @@ export function App() {
       else if (page === 'terms') targetPath = '/terms';
       else if (page === 'about') targetPath = '/about';
       else if (page === 'help' || page === 'faq') targetPath = '/help';
+      else if (page === 'report-problem') targetPath = '/report-problem';
       else if (page !== 'landing') targetPath = `/app/${page}`;
 
       if (window.location.pathname !== targetPath) {
@@ -258,6 +261,15 @@ export function App() {
       <Theme theme={themes[defaultThemeSlug]} mode="light">
         <PwaStatusBanners />
         <HelpSupportPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'report-problem') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <ReportProblemPage onNavigate={navigateTo} />
       </Theme>
     );
   }

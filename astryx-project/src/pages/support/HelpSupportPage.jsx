@@ -197,9 +197,9 @@ export function HelpSupportPage({ onNavigate }) {
                 For technical issues, institutional setup inquiries, or account questions, contact our support desk:
               </p>
               <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 16, fontSize: '0.9rem' }}>
-                <div><strong>Help Desk:</strong> <code>{APP_CONFIG.developer.supportEmail}</code></div>
-                <div><strong>Developer / Maintainer:</strong> <code>{APP_CONFIG.developer.displayName}</code></div>
-                <div><strong>Official Portal:</strong> <code>{APP_CONFIG.developer.website}</code></div>
+                <div><strong>Email:</strong> <code>dayonmakima@gmail.com</code></div>
+                <div><strong>Developer / Maintainer:</strong> <code>Joemarie Damasing</code></div>
+                {/* <div><strong>Official Portal:</strong> <code>{APP_CONFIG.developer.website}</code></div> */}
               </div>
             </div>
 

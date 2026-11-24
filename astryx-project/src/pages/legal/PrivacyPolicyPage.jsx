@@ -63,7 +63,7 @@ export function PrivacyPolicyPage({ onNavigate }) {
 
             <div style={{ backgroundColor: 'rgba(2, 132, 199, 0.06)', border: '1px solid rgba(2, 132, 199, 0.2)', borderRadius: 10, padding: 14 }}>
               <p style={{ margin: 0, fontSize: '0.875rem', color: '#0369a1' }}>
-                <strong>Important Notice:</strong> This Privacy Policy outlines the personal data handling practices of <strong>{APP_CONFIG.name}</strong>. Items enclosed in square brackets (e.g. <code>[Placeholder]</code>) represent specific institutional or organizational contact information to be provided by the system administrator or deploying entity.
+                <strong>Important Notice:</strong> This Privacy Policy outlines the personal data handling practices of <strong>{APP_CONFIG.name}</strong>. Items enclosed in square brackets ( <code>JOEMARIE DAMASING</code>) represent specific institutional or organizational contact information to be provided by the system administrator or deploying entity.
               </p>
             </div>
 
@@ -228,11 +228,11 @@ export function PrivacyPolicyPage({ onNavigate }) {
                 For privacy-related inquiries, data correction requests, or questions regarding our adherence to R.A. 10173, please contact:
               </p>
               <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 16, fontSize: '0.9rem' }}>
-                <div><strong>Application:</strong> {APP_CONFIG.name}</div>
-                <div><strong>Data Protection Officer:</strong> <code>{APP_CONFIG.developer.dpoContact}</code></div>
-                <div><strong>Institution / Organization:</strong> <code>{APP_CONFIG.developer.institution}</code></div>
-                <div><strong>Email:</strong> <code>{APP_CONFIG.developer.privacyEmail}</code></div>
-                <div><strong>Office Address:</strong> <code>{APP_CONFIG.developer.officeAddress}</code></div>
+                <div><strong>Application:</strong> Tempus</div>
+                {/* <div><strong>Data Protection Officer:</strong> <code>Joemarie Damasing</code></div> */}
+                {/* <div><strong>Institution / Organization:</strong> <code>{APP_CONFIG.developer.institution}</code></div> */}
+                <div><strong>Email:</strong> <code>dayonmakima@gmail.com</code></div>
+                {/* <div><strong>Office Address:</strong> <code>{APP_CONFIG.developer.officeAddress}</code></div> */}
               </div>
             </section>
 

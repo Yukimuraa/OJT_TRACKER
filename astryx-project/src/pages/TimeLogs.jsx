@@ -924,6 +924,7 @@ export function TimeLogs({ onNavigate, openAddModal = false, onAddModalHandled }
           <Button
             label="Log Hours"
             variant="primary"
+            className="ojt-btn-black"
             icon={<Icon icon="clock" size="sm" />}
             onClick={handleOpenNewLog}
           />

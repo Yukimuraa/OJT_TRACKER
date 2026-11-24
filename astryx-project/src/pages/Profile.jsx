@@ -330,6 +330,7 @@ export function Profile() {
           <Button
             label="Edit Profile"
             variant="primary"
+            className="ojt-btn-black"
             onClick={() => setIsEditDialogOpen(true)}
           />
         </HStack>

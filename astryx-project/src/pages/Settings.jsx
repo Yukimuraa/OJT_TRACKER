@@ -208,7 +208,7 @@ export function Settings({ onNavigate }) {
               <IosSwitch
                 checked={isDarkMode}
                 onChange={toggleDarkMode}
-                activeColor="#10B981"
+                activeColor="#000000"
                 ariaLabel="Dark Mode"
               />
             }
@@ -263,7 +263,7 @@ export function Settings({ onNavigate }) {
               <IosSwitch
                 checked={reminderSettings.remindersEnabled}
                 onChange={handleToggleReminder}
-                activeColor="#10B981"
+                activeColor="#000000"
                 ariaLabel="Daily Reminder"
               />
             }
@@ -444,7 +444,7 @@ export function Settings({ onNavigate }) {
                       fontSize: 12,
                       fontWeight: 700,
                       color: '#FFFFFF',
-                      backgroundColor: '#10B981',
+                      backgroundColor: '#000000',
                       border: 'none',
                       borderRadius: 6,
                       padding: '4px 8px',
@@ -506,6 +506,65 @@ export function Settings({ onNavigate }) {
             )}
 
             <Grid columns={{ minWidth: 280, max: 2 }} gap={4}>
+              {/* Section: Appearance / Dark Mode (Desktop) */}
+              <Card elevation="low" padding={5}>
+                <VStack gap={4}>
+                  <VStack gap={1}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          backgroundColor: 'var(--color-background-muted, #f8fafc)',
+                          border: '1px solid var(--color-border, #e2e8f0)',
+                          color: 'var(--color-text-primary, #142b49)',
+                        }}
+                      >
+                        <MoonIcon width={16} height={16} />
+                      </span>
+                      <Heading level={3}>Appearance</Heading>
+                    </div>
+                    <Text type="supporting" color="secondary">
+                      Switch between light and dark theme across the portal.
+                    </Text>
+                  </VStack>
+
+                  <Divider variant="subtle" />
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      backgroundColor: 'var(--color-background-muted, #FCFCFB)',
+                      borderRadius: 8,
+                      border: '1px solid var(--color-border, #e5e7eb)',
+                      gap: 16,
+                    }}
+                  >
+                    <VStack gap={0.5}>
+                      <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary, #142b49)' }}>
+                        Dark Mode
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary, #64748b)' }}>
+                        {isDarkMode ? 'Dark theme active' : 'Light theme active'}
+                      </span>
+                    </VStack>
+                    <IosSwitch
+                      checked={isDarkMode}
+                      onChange={toggleDarkMode}
+                      activeColor="#000000"
+                      ariaLabel="Dark Mode"
+                    />
+                  </div>
+                </VStack>
+              </Card>
+
               <InstallAppCard />
 
               {/* Section 0: Application Updates & Versioning */}
@@ -524,7 +583,8 @@ export function Settings({ onNavigate }) {
 
                     <Button
                       label={hasUnreadNotes ? "What's New (New)" : "What's New"}
-                      variant="ghost"
+                      variant="primary"
+                      className="ojt-btn-black"
                       size="sm"
                       onClick={() => setIsWhatsNewOpen(true)}
                     />
@@ -559,7 +619,8 @@ export function Settings({ onNavigate }) {
                       <HStack gap={2}>
                         <Button
                           label={isCheckingUpdate ? 'Checking...' : 'Check for Updates'}
-                          variant="secondary"
+                          variant="primary"
+                          className="ojt-btn-black"
                           size="sm"
                           disabled={isCheckingUpdate}
                           onClick={checkForUpdates}
@@ -599,6 +660,7 @@ export function Settings({ onNavigate }) {
                       <Button
                         label="Launch Setup Wizard"
                         variant="primary"
+                        className="ojt-btn-black"
                         onClick={() => onNavigate?.('onboarding')}
                       />
                     </HStack>
@@ -636,6 +698,7 @@ export function Settings({ onNavigate }) {
                       <Button
                         label="Save Target"
                         variant="primary"
+                        className="ojt-btn-black"
                         size="sm"
                         onClick={handleSaveHours}
                       />
@@ -747,7 +810,8 @@ export function Settings({ onNavigate }) {
                     <HStack>
                       <Button
                         label="Open Help &amp; FAQ Center"
-                        variant="secondary"
+                        variant="primary"
+                        className="ojt-btn-black"
                         onClick={() => onNavigate?.('help')}
                       />
                     </HStack>
@@ -774,7 +838,8 @@ export function Settings({ onNavigate }) {
                     <HStack>
                       <Button
                         label="Download JSON Backup"
-                        variant="secondary"
+                        variant="primary"
+                        className="ojt-btn-black"
                         onClick={handleExportData}
                       />
                     </HStack>
@@ -802,6 +867,7 @@ export function Settings({ onNavigate }) {
                       <Button
                         label="Clear All Records"
                         variant="destructive"
+                        className="ojt-btn-red"
                         onClick={() => setIsClearDialogOpen(true)}
                       />
                     </HStack>

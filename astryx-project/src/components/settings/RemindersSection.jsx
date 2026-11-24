@@ -149,7 +149,7 @@ export function RemindersSection() {
   const userTimezone = settings.timezone || getLocalTimezone();
 
   return (
-    <Card elevation="low" padding={5} style={{ backgroundColor: '#ffffff', borderRadius: 12 }}>
+    <Card elevation="low" padding={5} style={{ borderRadius: 12 }}>
       <VStack gap={4}>
         {/* Header */}
         <HStack justify="between" align="start" wrap="wrap" gap={2}>
@@ -272,17 +272,17 @@ export function RemindersSection() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            backgroundColor: '#FCFCFB',
+            backgroundColor: 'var(--color-background-muted, #FCFCFB)',
             borderRadius: 8,
-            border: '1px solid #e5e7eb',
+            border: '1px solid var(--color-border, #e5e7eb)',
             gap: 16,
           }}
         >
           <VStack gap={1}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: '#142b49' }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary, #142b49)' }}>
               Daily OJT Reminder
             </span>
-            <span style={{ fontSize: 12, color: '#64748b', lineHeight: 1.4 }}>
+            <span style={{ fontSize: 12, color: 'var(--color-text-secondary, #64748b)', lineHeight: 1.4 }}>
               Receive a reminder to record your OJT training hours.
             </span>
           </VStack>
@@ -313,7 +313,7 @@ export function RemindersSection() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: settings.remindersEnabled ? '#10b981' : '#cbd5e1',
+                backgroundColor: settings.remindersEnabled ? '#000000' : '#cbd5e1',
                 borderRadius: 24,
                 transition: 'background-color 0.2s ease',
               }}
@@ -343,9 +343,9 @@ export function RemindersSection() {
             flexDirection: 'column',
             gap: 8,
             padding: '12px 14px',
-            backgroundColor: '#FCFCFB',
+            backgroundColor: 'var(--color-background-muted, #FCFCFB)',
             borderRadius: 8,
-            border: '1px solid #e5e7eb',
+            border: '1px solid var(--color-border, #e5e7eb)',
             opacity: settings.remindersEnabled ? 1 : 0.7,
             transition: 'opacity 0.2s ease',
           }}
@@ -362,10 +362,10 @@ export function RemindersSection() {
             <HStack gap={2} align="center">
               <ClockIcon width={16} height={16} style={{ color: '#10b981' }} />
               <VStack gap={0}>
-                <span style={{ fontWeight: 600, fontSize: 13, color: '#142b49' }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--color-text-primary, #142b49)' }}>
                   Reminder Time
                 </span>
-                <span style={{ fontSize: 11, color: '#64748b' }}>
+                <span style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)' }}>
                   Local timezone: {userTimezone}
                 </span>
               </VStack>
@@ -381,9 +381,9 @@ export function RemindersSection() {
                 style={{
                   padding: '6px 10px',
                   borderRadius: 6,
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  color: '#142b49',
+                  border: '1px solid var(--color-border-emphasized, #cbd5e1)',
+                  backgroundColor: 'var(--color-background-surface, #ffffff)',
+                  color: 'var(--color-text-primary, #142b49)',
                   fontSize: 13,
                   fontWeight: 600,
                   outline: 'none',
@@ -396,7 +396,7 @@ export function RemindersSection() {
             </div>
           </div>
 
-          <span style={{ fontSize: 11, color: '#64748b' }}>
+          <span style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)' }}>
             Default reminder time is set to 5:00 PM. The application alerts you when your shift concludes.
           </span>
         </div>

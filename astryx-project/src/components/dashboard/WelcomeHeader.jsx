@@ -24,6 +24,7 @@ export function WelcomeHeader({ onLogHours }) {
       <Button
         label="+ Log Hours"
         variant="primary"
+        className="ojt-btn-black"
         onClick={onLogHours}
       />
     </HStack>

@@ -65,6 +65,7 @@ export function InstallAppCard() {
               <Button
                 label={isInstalled ? 'Installed' : 'Install App'}
                 variant="primary"
+                className="ojt-btn-black"
                 isDisabled={isInstalled}
                 onClick={handleInstallClick}
               />

@@ -224,6 +224,18 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
               >
                 Help &amp; Support
               </a>
+              <a
+                href="/report-problem"
+                onClick={handleLink('report-problem')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Report a Problem
+              </a>
             </div>
           </div>
 

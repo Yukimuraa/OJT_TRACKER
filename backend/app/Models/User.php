@@ -80,4 +80,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(UserReminder::class);
     }
+
+    /**
+     * Get the problem reports submitted by the user.
+     */
+    public function problemReports(): HasMany
+    {
+        return $this->hasMany(ProblemReport::class);
+    }
 }

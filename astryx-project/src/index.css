@@ -37,7 +37,8 @@ html[data-theme="light"],
 }
 
 /* Optional Dark Theme Palette - Strictly applied ONLY when user toggles dark mode on */
-html.dark[data-theme="dark"] {
+html.dark[data-theme="dark"],
+html.dark[data-theme="dark"] [data-astryx-theme] {
   color-scheme: dark;
 
   /* Brand Primary & Accents */
@@ -593,6 +594,7 @@ main,
   html.dark[data-theme="dark"] body,
   html.dark[data-theme="dark"] #root,
   html.dark[data-theme="dark"] main,
+  html.dark[data-theme="dark"] [data-astryx-theme] main,
   html.dark[data-theme="dark"] .ojt-authenticated-content {
     background-color: #0f172a !important;
   }
@@ -623,6 +625,7 @@ main,
   html.dark[data-theme="dark"] body,
   html.dark[data-theme="dark"] #root,
   html.dark[data-theme="dark"] main,
+  html.dark[data-theme="dark"] [data-astryx-theme] main,
   html.dark[data-theme="dark"] .ojt-authenticated-content {
     background-color: #0f172a !important;
   }
@@ -1332,6 +1335,50 @@ html[data-theme="dark"] .ojt-ios-settings-row:active {
     align-items: flex-start;
     padding: 12px 0 20px 0;
   }
+}
+
+/* Solid Black Action Button Override for targeted CTA buttons */
+.ojt-btn-black,
+button.ojt-btn-black {
+  background-color: #000000 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+.ojt-btn-black:hover:not(:disabled):not([aria-disabled="true"]),
+button.ojt-btn-black:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: #1f2937 !important;
+  background-image: none !important;
+  border-color: #1f2937 !important;
+}
+
+.ojt-btn-black:active:not(:disabled):not([aria-disabled="true"]),
+button.ojt-btn-black:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: #111827 !important;
+  background-image: none !important;
+}
+
+/* Solid Red Destructive Button Override */
+.ojt-btn-red,
+button.ojt-btn-red {
+  background-color: #dc2626 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+.ojt-btn-red:hover:not(:disabled):not([aria-disabled="true"]),
+button.ojt-btn-red:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: #b91c1c !important;
+  background-image: none !important;
+  border-color: #b91c1c !important;
+}
+
+.ojt-btn-red:active:not(:disabled):not([aria-disabled="true"]),
+button.ojt-btn-red:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: #991b1b !important;
+  background-image: none !important;
 }
 
 

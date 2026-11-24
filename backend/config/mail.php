@@ -116,4 +116,12 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Support Notification Recipient
+    |--------------------------------------------------------------------------
+    */
+
+    'support_address' => env('SUPPORT_EMAIL'),
+
 ];
