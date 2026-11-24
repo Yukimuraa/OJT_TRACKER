@@ -22,7 +22,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerate();
         }
 
-        $user = $request->user()->load(['studentProfile.school', 'studentProfile.company']);
+        $user = Auth::guard('web')->user()->load(['studentProfile.school', 'studentProfile.company']);
 
         return response()->json([
             'message' => 'Login successful.',

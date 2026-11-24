@@ -612,27 +612,27 @@ main,
     display: flex !important;
   }
 
-  /* Mobile Background: #F4F7FA as required */
+  /* Mobile Background: #F4F7FA for authenticated portal (exclude auth split pages so login/register stay clean #FCFCFB) */
   body,
   #root,
-  main,
+  main:not(.ojt-auth-form-center),
   .ojt-authenticated-content,
-  [data-astryx-theme] main {
+  [data-astryx-theme] main:not(.ojt-auth-form-center) {
     background-color: #F4F7FA !important;
   }
 
   /* Optional dark mode background override on mobile ONLY when user explicitly enabled it */
   html.dark[data-theme="dark"] body,
   html.dark[data-theme="dark"] #root,
-  html.dark[data-theme="dark"] main,
-  html.dark[data-theme="dark"] [data-astryx-theme] main,
+  html.dark[data-theme="dark"] main:not(.ojt-auth-form-center),
+  html.dark[data-theme="dark"] [data-astryx-theme] main:not(.ojt-auth-form-center),
   html.dark[data-theme="dark"] .ojt-authenticated-content {
     background-color: #0f172a !important;
   }
 
   /* Safe scrolling clearance for floating bottom nav so controls are never obscured */
   .ojt-authenticated-content,
-  main {
+  main:not(.ojt-auth-form-center) {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
@@ -1319,6 +1319,7 @@ html[data-theme="dark"] .ojt-ios-settings-row:active {
 @media (max-width: 768px) {
   .ojt-auth-split-shell {
     grid-template-columns: 1fr;
+    background-color: #FCFCFB !important;
   }
 
   .ojt-auth-brand-panel {
@@ -1329,11 +1330,14 @@ html[data-theme="dark"] .ojt-ios-settings-row:active {
     grid-column: 1;
     padding: 16px 16px 32px 16px;
     justify-content: flex-start;
+    background-color: #FCFCFB !important;
   }
 
-  .ojt-auth-form-center {
+  .ojt-auth-form-center,
+  [data-astryx-theme] main.ojt-auth-form-center {
     align-items: flex-start;
-    padding: 12px 0 20px 0;
+    padding: 12px 0 20px 0 !important;
+    background-color: #FCFCFB !important;
   }
 }
 
@@ -1380,5 +1384,202 @@ button.ojt-btn-red:active:not(:disabled):not([aria-disabled="true"]) {
   background-color: #991b1b !important;
   background-image: none !important;
 }
+
+/* Public Feedback & Ratings — Two-Row Opposite-Direction Infinite Floating Carousel */
+.ojt-feedback-page {
+  background-color: #FCFCFB;
+  color: #142b49;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.ojt-carousel-stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 10px 0 14px 0;
+}
+
+.ojt-carousel-stage::before,
+.ojt-carousel-stage::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(20px, 6vw, 88px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ojt-carousel-stage::before {
+  left: 0;
+  background: linear-gradient(to right, #FCFCFB 0%, rgba(252, 252, 251, 0) 100%);
+}
+
+.ojt-carousel-stage::after {
+  right: 0;
+  background: linear-gradient(to left, #FCFCFB 0%, rgba(252, 252, 251, 0) 100%);
+}
+
+.ojt-carousel-row {
+  width: 100%;
+  overflow: hidden;
+  padding: 10px 0;
+}
+
+.ojt-carousel-track {
+  display: flex;
+  align-items: stretch;
+  width: max-content;
+  will-change: transform;
+}
+
+.ojt-carousel-group {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+@keyframes ojtFeedbackMarqueeLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes ojtFeedbackMarqueeRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ojtFeedbackFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.ojt-carousel-track-rtl {
+  animation: ojtFeedbackMarqueeLeft 54s linear infinite;
+}
+
+.ojt-carousel-track-ltr {
+  animation: ojtFeedbackMarqueeRight 68s linear infinite;
+}
+
+.ojt-feedback-card-wrap {
+  padding-right: 18px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.ojt-feedback-card {
+  width: clamp(275px, 76vw, 355px);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 26px -14px rgba(20, 43, 73, 0.14);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  box-sizing: border-box;
+  animation: ojtFeedbackFloat 6.6s ease-in-out infinite;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ojt-feedback-card-alt {
+  animation-duration: 7.8s;
+  animation-delay: -2.4s;
+}
+
+.ojt-feedback-card:hover,
+.ojt-feedback-card:focus-visible {
+  border-color: #cbd5e1;
+  box-shadow: 0 14px 32px -12px rgba(20, 43, 73, 0.2);
+  outline: 2px solid transparent;
+}
+
+.ojt-feedback-card:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.ojt-carousel-row:hover .ojt-carousel-track,
+.ojt-carousel-row:focus-within .ojt-carousel-track,
+.ojt-carousel-stage.is-paused .ojt-carousel-track,
+.ojt-carousel-row:hover .ojt-feedback-card,
+.ojt-carousel-row:focus-within .ojt-feedback-card,
+.ojt-carousel-stage.is-paused .ojt-feedback-card {
+  animation-play-state: paused;
+}
+
+@media (max-width: 640px) {
+  .ojt-feedback-card-wrap {
+    padding-right: 14px;
+  }
+
+  .ojt-feedback-card {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ojt-carousel-track-rtl,
+  .ojt-carousel-track-ltr,
+  .ojt-feedback-card,
+  .ojt-feedback-card-alt {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .ojt-carousel-stage::before,
+  .ojt-carousel-stage::after {
+    display: none;
+  }
+
+  .ojt-carousel-row {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 16px;
+  }
+
+  .ojt-carousel-group-clone {
+    display: none !important;
+  }
+
+  .ojt-feedback-card-wrap {
+    scroll-snap-align: start;
+  }
+}
+
+/* Student Dashboard Top Navbar Brand (left side of account-menu bar across all viewports) */
+.ojt-dashboard-navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary, #142b49);
+  line-height: 1.2;
+}
+
+
 
 

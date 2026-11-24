@@ -24,6 +24,7 @@ class ProblemReportController extends Controller
             'category' => $validated['category'],
             'description' => $validated['description'],
             'email' => $user ? null : ($validated['email'] ?? null),
+            'status' => ProblemReport::STATUS_PENDING,
         ]);
 
         $supportEmail = config('mail.support_address');

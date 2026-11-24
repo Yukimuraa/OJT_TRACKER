@@ -23,7 +23,14 @@ import { TermsOfServicePage } from './pages/legal/TermsOfServicePage';
 import { AboutPage } from './pages/about/AboutPage';
 import { HelpSupportPage } from './pages/support/HelpSupportPage';
 import { ReportProblemPage } from './pages/support/ReportProblemPage';
-import { isAuthenticated, getCurrentUser, fetchCurrentUser } from './services/authService';
+import { FeedbackPage } from './pages/feedback/FeedbackPage';
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminStudentsPage } from './pages/admin/AdminStudentsPage';
+import { AdminProblemReportsPage } from './pages/admin/AdminProblemReportsPage';
+import { AdminFeedbackPage } from './pages/admin/AdminFeedbackPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import { getCurrentUser, fetchCurrentUser } from './services/authService';
 import { restartReminderScheduler } from './services/reminderService';
 import { fetchStudentProfile } from './services/profileService';
 import { isOnboardingCompleted } from './services/onboardingService';
@@ -31,11 +38,42 @@ import { PwaStatusBanners } from './components/pwa/PwaStatusBanners';
 import { useDarkMode } from './hooks/useDarkMode';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
-const PROTECTED_PAGES = ['dashboard', 'timelogs', 'reports', 'profile', 'settings', 'onboarding'];
+const STUDENT_PROTECTED_PAGES = ['dashboard', 'timelogs', 'reports', 'profile', 'settings', 'onboarding'];
+const ADMIN_PAGES = ['admin-dashboard', 'admin-students', 'admin-problem-reports', 'admin-feedback', 'admin-settings'];
+
+const ADMIN_ROUTE_PATHS = {
+  'admin-dashboard': '/admin/dashboard',
+  'admin-students': '/admin/students',
+  'admin-problem-reports': '/admin/problem-reports',
+  'admin-feedback': '/admin/feedback',
+  'admin-settings': '/admin/settings',
+};
+
+function isAdminUser(user) {
+  return user?.role === 'admin';
+}
+
+function getTargetPathForPage(page) {
+  if (page === 'register') return '/register';
+  if (page === 'login') return '/login';
+  if (page === 'forgot-password') return '/forgot-password';
+  if (page === 'reset-password') return '/reset-password';
+  if (page === 'verify-email') return '/verify-email';
+  if (page === 'onboarding') return '/onboarding';
+  if (page === 'privacy') return '/privacy';
+  if (page === 'terms') return '/terms';
+  if (page === 'about') return '/about';
+  if (page === 'help' || page === 'faq') return '/help';
+  if (page === 'report-problem') return '/report-problem';
+  if (page === 'feedback') return '/feedback';
+  if (ADMIN_ROUTE_PATHS[page]) return ADMIN_ROUTE_PATHS[page];
+  if (page !== 'landing') return `/app/${page}`;
+  return '/';
+}
 
 function getInitialPage() {
   if (typeof window !== 'undefined') {
-    const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
     if (path === '/register') return 'register';
     if (path === '/login') return 'login';
     if (path === '/forgot-password') return 'forgot-password';
@@ -46,10 +84,35 @@ function getInitialPage() {
     if (path === '/about') return 'about';
     if (path === '/help' || path === '/faq') return 'help';
     if (path === '/report-problem' || path === '/report-a-problem' || path === '/app/report-problem') return 'report-problem';
+    if (path === '/feedback' || path === '/feedback-ratings' || path === '/app/feedback') return 'feedback';
 
-    const authed = isAuthenticated();
-    if (!authed && (path.startsWith('/app') || path === '/dashboard' || path === '/onboarding' || path === '/timelogs')) {
+    const currentUser = getCurrentUser();
+    const authed = Boolean(currentUser);
+    const isAdminRoute = path === '/admin' || path.startsWith('/admin/');
+    const isStudentAppRoute =
+      path.startsWith('/app') ||
+      path === '/dashboard' ||
+      path === '/onboarding' ||
+      path === '/timelogs' ||
+      path === '/reports' ||
+      path === '/profile' ||
+      path === '/settings';
+
+    if (!authed && (isAdminRoute || isStudentAppRoute)) {
       return 'login';
+    }
+
+    if (authed && isAdminUser(currentUser)) {
+      if (path === '/admin/students') return 'admin-students';
+      if (path === '/admin/problem-reports') return 'admin-problem-reports';
+      if (path === '/admin/feedback') return 'admin-feedback';
+      if (path === '/admin/settings') return 'admin-settings';
+      if (isAdminRoute || isStudentAppRoute) return 'admin-dashboard';
+      return 'landing';
+    }
+
+    if (authed && isAdminRoute) {
+      return isOnboardingCompleted() ? 'dashboard' : 'onboarding';
     }
 
     if (path === '/onboarding') {
@@ -85,49 +148,112 @@ export function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Initialize background reminder scheduler for authenticated student
+  // Initialize background reminder scheduler for authenticated students only
   useEffect(() => {
-    if (isAuthenticated()) {
-      const user = getCurrentUser();
-      if (user?.id) {
-        restartReminderScheduler(user.id);
+    const user = getCurrentUser();
+    if (user?.id && !isAdminUser(user)) {
+      restartReminderScheduler(user.id);
+    }
+  }, [activePage]);
+
+  // Normalize URL path when initial route guard redirects unauthenticated or mismatched-role visitors
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+    const isAdminRoute = path === '/admin' || path.startsWith('/admin/');
+    const isStudentAppRoute =
+      path.startsWith('/app') ||
+      path === '/dashboard' ||
+      path === '/onboarding' ||
+      path === '/timelogs' ||
+      path === '/reports' ||
+      path === '/profile' ||
+      path === '/settings';
+
+    const redirectedToLogin = activePage === 'login' && (isAdminRoute || isStudentAppRoute);
+    const redirectedFromAdmin = !ADMIN_PAGES.includes(activePage) && isAdminRoute;
+    const redirectedToAdmin = ADMIN_PAGES.includes(activePage) && !isAdminRoute;
+
+    if (redirectedToLogin || redirectedFromAdmin || redirectedToAdmin) {
+      const canonical = getTargetPathForPage(activePage);
+      if (path !== canonical) {
+        window.history.replaceState({ page: activePage }, '', canonical);
       }
     }
   }, [activePage]);
 
-  // Restore student profile & onboarding state from backend on mount and page change
+  // Verify authoritative backend role & session on mount and route changes
   useEffect(() => {
-    if (isAuthenticated()) {
-      fetchStudentProfile().then((profile) => {
-        if (profile?.onboardingCompleted && (activePage === 'onboarding' || window.location.pathname.toLowerCase() === '/onboarding')) {
-          setActivePage('dashboard');
+    let isMounted = true;
+
+    const syncSessionAndRole = async () => {
+      const liveUser = await fetchCurrentUser();
+      if (!isMounted) return;
+
+      if (!liveUser) {
+        if (ADMIN_PAGES.includes(activePage) || STUDENT_PROTECTED_PAGES.includes(activePage)) {
+          setActivePage('login');
           if (typeof window !== 'undefined') {
-            window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
+            window.history.replaceState({ page: 'login' }, '', '/login');
           }
         }
-      }).catch(() => {});
-    } else {
-      // In case session cookie exists in browser/PWA but local storage was cleared
-      fetchCurrentUser().then((user) => {
-        if (user) {
-          fetchStudentProfile().then((profile) => {
-            const isCompleted = Boolean(profile?.onboardingCompleted ?? user.onboardingCompleted);
-            const targetPage = isCompleted ? 'dashboard' : 'onboarding';
-            if (activePage === 'login' || activePage === 'landing') {
-              setActivePage(targetPage);
-              if (typeof window !== 'undefined') {
-                window.history.replaceState({ page: targetPage }, '', `/${targetPage}`);
-              }
-            }
-          }).catch(() => {});
+        return;
+      }
+
+      if (isAdminUser(liveUser)) {
+        if (STUDENT_PROTECTED_PAGES.includes(activePage) || activePage === 'login') {
+          setActivePage('admin-dashboard');
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({ page: 'admin-dashboard' }, '', '/admin/dashboard');
+          }
         }
-      }).catch(() => {});
-    }
+        return;
+      }
+
+      // Authenticated student: block admin routes and restore onboarding state
+      if (ADMIN_PAGES.includes(activePage)) {
+        const fallback = liveUser.onboardingCompleted || isOnboardingCompleted(liveUser.id) ? 'dashboard' : 'onboarding';
+        const fallbackPath = fallback === 'dashboard' ? '/app/dashboard' : '/onboarding';
+        setActivePage(fallback);
+        if (typeof window !== 'undefined') {
+          window.history.replaceState({ page: fallback }, '', fallbackPath);
+        }
+        return;
+      }
+
+      try {
+        const profile = await fetchStudentProfile();
+        if (!isMounted) return;
+        const isCompleted = Boolean(profile?.onboardingCompleted ?? liveUser.onboardingCompleted);
+
+        if (isCompleted && (activePage === 'onboarding' || window.location.pathname.toLowerCase() === '/onboarding')) {
+          setActivePage('dashboard');
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({ page: 'dashboard' }, '', '/app/dashboard');
+          }
+        } else if (activePage === 'login' || activePage === 'landing') {
+          const targetPage = isCompleted ? 'dashboard' : 'onboarding';
+          setActivePage(targetPage);
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({ page: targetPage }, '', targetPage === 'dashboard' ? '/app/dashboard' : '/onboarding');
+          }
+        }
+      } catch {
+        // Offline cached session fallback
+      }
+    };
+
+    syncSessionAndRole();
+    return () => {
+      isMounted = false;
+    };
   }, [activePage]);
 
   const navigateTo = (page) => {
-    // Route guard: Prevent unauthenticated users from accessing protected pages
-    if (PROTECTED_PAGES.includes(page) && !isAuthenticated()) {
+    const currentUser = getCurrentUser();
+    const isProtected = STUDENT_PROTECTED_PAGES.includes(page) || ADMIN_PAGES.includes(page);
+
+    if (isProtected && !currentUser) {
       setActivePage('login');
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         window.history.pushState({ page: 'login' }, '', '/login');
@@ -135,22 +261,27 @@ export function App() {
       return;
     }
 
+    if (ADMIN_PAGES.includes(page) && !isAdminUser(currentUser)) {
+      const studentFallback = isOnboardingCompleted(currentUser?.id) ? 'dashboard' : 'onboarding';
+      const studentPath = studentFallback === 'dashboard' ? '/app/dashboard' : '/onboarding';
+      setActivePage(studentFallback);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({ page: studentFallback }, '', studentPath);
+      }
+      return;
+    }
+
+    if (STUDENT_PROTECTED_PAGES.includes(page) && isAdminUser(currentUser)) {
+      setActivePage('admin-dashboard');
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({ page: 'admin-dashboard' }, '', '/admin/dashboard');
+      }
+      return;
+    }
+
     setActivePage(page);
     if (typeof window !== 'undefined') {
-      let targetPath = '/';
-      if (page === 'register') targetPath = '/register';
-      else if (page === 'login') targetPath = '/login';
-      else if (page === 'forgot-password') targetPath = '/forgot-password';
-      else if (page === 'reset-password') targetPath = '/reset-password';
-      else if (page === 'verify-email') targetPath = '/verify-email';
-      else if (page === 'onboarding') targetPath = '/onboarding';
-      else if (page === 'privacy') targetPath = '/privacy';
-      else if (page === 'terms') targetPath = '/terms';
-      else if (page === 'about') targetPath = '/about';
-      else if (page === 'help' || page === 'faq') targetPath = '/help';
-      else if (page === 'report-problem') targetPath = '/report-problem';
-      else if (page !== 'landing') targetPath = `/app/${page}`;
-
+      const targetPath = getTargetPathForPage(page);
       if (window.location.pathname !== targetPath) {
         window.history.pushState({ page }, '', targetPath);
       }
@@ -162,7 +293,14 @@ export function App() {
       <Theme theme={themes[defaultThemeSlug]} mode="light">
         <PwaStatusBanners />
         <LandingPage
-          onEnterApp={() => (isAuthenticated() ? navigateTo('dashboard') : navigateTo('login'))}
+          onEnterApp={() => {
+            const current = getCurrentUser();
+            if (!current) {
+              navigateTo('login');
+              return;
+            }
+            navigateTo(isAdminUser(current) ? 'admin-dashboard' : 'dashboard');
+          }}
           onNavigate={navigateTo}
         />
       </Theme>
@@ -270,6 +408,42 @@ export function App() {
       <Theme theme={themes[defaultThemeSlug]} mode="light">
         <PwaStatusBanners />
         <ReportProblemPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (activePage === 'feedback') {
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <PwaStatusBanners />
+        <FeedbackPage onNavigate={navigateTo} />
+      </Theme>
+    );
+  }
+
+  if (ADMIN_PAGES.includes(activePage)) {
+    const renderAdminPage = () => {
+      switch (activePage) {
+        case 'admin-dashboard':
+          return <AdminDashboardPage onNavigate={navigateTo} />;
+        case 'admin-students':
+          return <AdminStudentsPage />;
+        case 'admin-problem-reports':
+          return <AdminProblemReportsPage />;
+        case 'admin-feedback':
+          return <AdminFeedbackPage onNavigate={navigateTo} />;
+        case 'admin-settings':
+          return <AdminSettingsPage />;
+        default:
+          return <AdminDashboardPage onNavigate={navigateTo} />;
+      }
+    };
+
+    return (
+      <Theme theme={themes[defaultThemeSlug]} mode="light">
+        <AdminLayout activePage={activePage} onNavigate={navigateTo}>
+          {renderAdminPage()}
+        </AdminLayout>
       </Theme>
     );
   }

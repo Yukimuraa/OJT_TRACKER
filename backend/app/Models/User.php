@@ -15,8 +15,12 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public const ROLE_STUDENT = 'student';
+    public const ROLE_ADMIN = 'admin';
+
     /**
      * The attributes that are mass assignable.
+     * Role and activation status are intentionally excluded to prevent mass-assignment escalation.
      *
      * @var list<string>
      */
@@ -46,7 +50,24 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'deactivated_at' => 'datetime',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return ($this->role ?? self::ROLE_STUDENT) === self::ROLE_ADMIN;
+    }
+
+    public function isStudent(): bool
+    {
+        return ($this->role ?? self::ROLE_STUDENT) === self::ROLE_STUDENT;
+    }
+
+    public function isActive(): bool
+    {
+        return (bool) ($this->is_active ?? true);
     }
 
     /**
@@ -87,5 +108,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function problemReports(): HasMany
     {
         return $this->hasMany(ProblemReport::class);
+    }
+
+    /**
+     * Get the feedback submissions from the user.
+     */
+    public function feedbacks(): HasMany
+    {
+        return $this->hasMany(Feedback::class);
     }
 }

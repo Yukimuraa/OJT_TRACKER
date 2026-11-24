@@ -807,12 +807,17 @@ export function Settings({ onNavigate }) {
                     <Text size="sm" color="secondary">
                       Learn how to configure shifts, export Long Bond DTTRs, upload custom templates, and resolve common issues.
                     </Text>
-                    <HStack>
+                    <HStack gap={2} wrap="wrap">
                       <Button
                         label="Open Help &amp; FAQ Center"
                         variant="primary"
                         className="ojt-btn-black"
                         onClick={() => onNavigate?.('help')}
+                      />
+                      <Button
+                        label="Feedback &amp; Ratings"
+                        variant="secondary"
+                        onClick={() => onNavigate?.('feedback')}
                       />
                     </HStack>
                   </VStack>

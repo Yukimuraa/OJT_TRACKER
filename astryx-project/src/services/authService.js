@@ -31,11 +31,14 @@ export async function getSchools(search = '') {
 function normalizeUser(backendUser) {
   if (!backendUser) return null;
   const profile = backendUser.student_profile || {};
+  const role = backendUser.role === 'admin' ? 'admin' : 'student';
   return {
     id: backendUser.id,
     fullName: backendUser.name || '',
     name: backendUser.name || '',
     email: backendUser.email || '',
+    role,
+    isActive: backendUser.is_active !== false,
     studentId: profile.student_id || '',
     schoolId: profile.school?.id || profile.school_id || null,
     schoolName: profile.school?.name || '',
@@ -125,7 +128,7 @@ export async function fetchCurrentUser() {
     }
     return user;
   } catch (err) {
-    if (err.status === 401) {
+    if (err.status === 401 || (err.status === 403 && err.data?.code === 'ACCOUNT_DEACTIVATED')) {
       clearSession();
     }
     return null;
@@ -240,7 +243,7 @@ export async function loginUser({ email, password, remember = true }) {
       message: res?.message || 'Logged in successfully.',
     };
   } catch (err) {
-    const code = err.status === 422 ? 'INVALID_CREDENTIALS' : 'AUTH_ERROR';
+    const code = err.data?.code || (err.status === 422 ? 'INVALID_CREDENTIALS' : 'AUTH_ERROR');
     const firstErrorMessage =
       err.errors && Object.values(err.errors)[0]
         ? Object.values(err.errors)[0][0]

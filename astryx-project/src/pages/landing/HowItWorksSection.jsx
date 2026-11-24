@@ -63,7 +63,7 @@ export function HowItWorksSection() {
               <span>Simple 3-Step Workflow</span>
             </div>
             <h2 className="ojt-section-headline">
-              How OJT Hours Tracker Works
+              How Tempus Works
             </h2>
             <p className="ojt-lead-text">
               Zero complicated spreadsheets or lost paper slips. Start in seconds, stay organized

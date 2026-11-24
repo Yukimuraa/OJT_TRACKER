@@ -51,7 +51,11 @@ export function LoginPage({ onNavigate }) {
       setIsSubmitting(false);
 
       if (!result.success) {
-        if (result.code === 'ACCOUNT_NOT_FOUND') {
+        if (result.code === 'ACCOUNT_DEACTIVATED') {
+          setErrors({
+            general: result.error || 'Your account has been deactivated. Please contact an administrator.',
+          });
+        } else if (result.code === 'ACCOUNT_NOT_FOUND') {
           setErrors({
             general: 'Account not found. Please register first.',
             email: 'Account not found with this email.',
@@ -64,6 +68,12 @@ export function LoginPage({ onNavigate }) {
         } else {
           setErrors({ general: result.error || 'Authentication failed. Please try again.' });
         }
+        return;
+      }
+
+      // Role-based redirection resolved strictly from authenticated backend response
+      if (result.user?.role === 'admin') {
+        onNavigate?.('admin-dashboard');
         return;
       }
 

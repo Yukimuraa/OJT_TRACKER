@@ -10,6 +10,18 @@ class ProblemReport extends Model
 {
     use HasFactory;
 
+    public const STATUS_PENDING = 'Pending';
+    public const STATUS_UNDER_REVIEW = 'Under Review';
+    public const STATUS_RESOLVED = 'Resolved';
+    public const STATUS_CLOSED = 'Closed';
+
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_UNDER_REVIEW,
+        self::STATUS_RESOLVED,
+        self::STATUS_CLOSED,
+    ];
+
     public const CATEGORIES = [
         'Bug or technical issue',
         'Login or account problem',
@@ -30,6 +42,7 @@ class ProblemReport extends Model
         'category',
         'description',
         'email',
+        'status',
     ];
 
     /**

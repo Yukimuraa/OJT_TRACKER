@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@astryxdesign/core/Button';
+import { BrandLogo } from '../../components/auth/AuthFormControls';
 import {
-  GraduationCapIcon,
   HomeIcon,
   SparklesIcon,
   DeviceMobileIcon,
@@ -129,44 +129,18 @@ export function LandingNav({ onRegister, onLogin }) {
                 color: '#142b49',
               }}
             >
-              <div
+              <BrandLogo size={36} alt="Tempus Logo" />
+              <span
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#10b981',
+                  fontSize: '1.25rem',
+                  fontWeight: 800,
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1.2,
+                  color: '#142b49',
                 }}
               >
-                <GraduationCapIcon style={{ width: 22, height: 22 }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 800,
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.2,
-                    color: '#142b49',
-                  }}
-                >
-                  OJT Tracker
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: '#10b981',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Student Portal
-                </span>
-              </div>
+                Tempus
+              </span>
             </a>
 
             {/* Desktop Navigation Links (centered, brand emerald on hover and active, never black) */}

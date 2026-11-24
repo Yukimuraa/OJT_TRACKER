@@ -28,10 +28,10 @@ export function MobileBottomNav({ activePage, onNavigate, onAddLog }) {
     activePage === 'privacy' ||
     activePage === 'terms';
 
-  // Active accent color (matches user's app branding #10B981)
-  const activeColor = '#10B981';
-  const centerButtonBg = '#10B981';
-  const centerButtonGlow = 'rgba(16, 185, 129, 0.38)';
+  // Active icon & center action colors (solid black)
+  const activeColor = '#000000';
+  const centerButtonBg = '#000000';
+  const centerButtonGlow = 'rgba(0, 0, 0, 0.24)';
 
   return (
     <nav
@@ -114,7 +114,7 @@ export function MobileBottomNav({ activePage, onNavigate, onAddLog }) {
         <ChartBarIcon width={24} height={24} />
       </button>
 
-      {/* 3. Center Prominent Add Button (Squircle with #10B981) */}
+      {/* 3. Center Prominent Add Button (Black Squircle) */}
       <div
         style={{
           flex: 1,

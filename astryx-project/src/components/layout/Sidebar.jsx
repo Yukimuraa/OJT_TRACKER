@@ -1,19 +1,11 @@
 import React from 'react';
-import { SideNav, SideNavHeading, SideNavItem, SideNavSection } from '@astryxdesign/core/SideNav';
-import { Icon } from '@astryxdesign/core/Icon';
-import { GraduationCapIcon, DashboardIcon, ChartBarIcon, UserIcon } from '../common/BrandIcons';
+import { SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core/SideNav';
+import { DashboardIcon, ChartBarIcon, UserIcon } from '../common/BrandIcons';
 
 export function Sidebar({ activePage, onNavigate }) {
   return (
     <SideNav
       collapsible={true}
-      header={
-        <SideNavHeading
-          heading="OJT Tracker"
-          subheading="Student Portal"
-          icon={<Icon icon={GraduationCapIcon} color="accent" size="lg" label="OJT Hours Tracker Logo" />}
-        />
-      }
       footer={
         <SideNavSection title="Account" isHeaderHidden={true}>
           <SideNavItem

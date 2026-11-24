@@ -21,11 +21,15 @@ class RegisteredUserController extends Controller
     public function store(RegisterRequest $request): JsonResponse
     {
         $user = DB::transaction(function () use ($request) {
-            $user = User::create([
+            $user = new User([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]);
+            // Always force public registrations to active student role
+            $user->role = User::ROLE_STUDENT;
+            $user->is_active = true;
+            $user->save();
 
             $user->studentProfile()->create([
                 'school_id' => $request->school_id,
@@ -36,7 +40,7 @@ class RegisteredUserController extends Controller
             return $user;
         });
 
-        Auth::login($user);
+        Auth::guard('web')->login($user);
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }

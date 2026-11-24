@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCapIcon } from '../../components/common/BrandIcons';
+import { BrandLogo } from '../../components/auth/AuthFormControls';
 import { APP_CONFIG } from '../../config/appConfig';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -48,29 +48,16 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
           {/* Brand Info Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, gridColumn: 'span 2' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#10b981',
-                }}
-              >
-                <GraduationCapIcon style={{ width: 20, height: 20 }} />
-              </div>
+              <BrandLogo size={36} alt="Tempus Logo" />
               <span
                 style={{
-                  fontSize: '1.15rem',
+                  fontSize: '1.2rem',
                   fontWeight: 800,
                   color: '#142b49',
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.025em',
                 }}
               >
-                {APP_CONFIG.name}
+                Tempus
               </span>
             </div>
 
@@ -83,7 +70,7 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
                 maxWidth: 380,
               }}
             >
-              A modern Progressive Web Application designed specifically for Filipino student
+              Tempus is a modern Progressive Web Application designed specifically for Filipino student
               interns to record daily attendance, monitor hours rendered, and export official
               college DTTR reports.
             </p>
@@ -236,6 +223,18 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
               >
                 Report a Problem
               </a>
+              <a
+                href="/feedback"
+                onClick={handleLink('feedback')}
+                style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Feedback &amp; Ratings
+              </a>
             </div>
           </div>
 
@@ -304,7 +303,7 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
                   transition: 'color 0.15s',
                 }}
               >
-                About {APP_CONFIG.shortName}
+                About Tempus
               </a>
             </div>
           </div>
@@ -325,7 +324,7 @@ export function FooterSection({ onRegister, onLogin, onNavigate }) {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span>
-              &copy; {CURRENT_YEAR} {APP_CONFIG.name}. Built with care for student interns.
+              &copy; {CURRENT_YEAR} Tempus. Built with care for student interns.
             </span>
             <span
               style={{

@@ -18,12 +18,12 @@ const CURRENT_YEAR = new Date().getFullYear();
  * BrandLogo - Renders the high-resolution transparent application logo
  * at a compact, crisp icon size (never upscaled or enlarged).
  */
-export function BrandLogo({ size = 36 }) {
+export function BrandLogo({ size = 36, alt = 'OJT Hours Tracker Logo' }) {
   const clampedSize = Math.min(Math.max(size, 24), 40);
   return (
     <img
       src="/brand-logo.png"
-      alt="OJT Hours Tracker Logo"
+      alt={alt}
       width={clampedSize}
       height={clampedSize}
       style={{

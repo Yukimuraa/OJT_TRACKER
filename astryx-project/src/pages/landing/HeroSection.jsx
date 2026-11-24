@@ -389,8 +389,9 @@ export function HeroSection({ onRegister }) {
 
             {/* Main Headline */}
             <h1 className="ojt-hero-headline">
+              <span style={{ display: 'block' }}>Meet Tempus.</span>
               Track Your OJT Hours.{' '}
-              <span style={{ color: '#10b981' }}>Stay on Top of Your Progress.</span>
+              <span style={{ color: '#10b981' }}>Stay On Top of Your Progress.</span>
             </h1>
 
             {/* Supporting description */}

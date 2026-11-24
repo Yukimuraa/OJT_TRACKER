@@ -4,6 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -66,6 +67,17 @@ class LoginRequest extends FormRequest
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
+        }
+
+        $authenticated = Auth::guard('web')->user();
+        if ($authenticated && ! $authenticated->isActive()) {
+            Auth::guard('web')->logout();
+            RateLimiter::clear($this->throttleKey());
+
+            throw new HttpResponseException(response()->json([
+                'message' => 'Your account has been deactivated. Please contact an administrator.',
+                'code' => 'ACCOUNT_DEACTIVATED',
+            ], 403));
         }
 
         RateLimiter::clear($this->throttleKey());
